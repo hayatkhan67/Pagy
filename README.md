@@ -6,7 +6,6 @@
 </p>
 <p align="center">
 	<a href="https://pub.dev/packages/pagy" rel="noopener" target="_blank"><img src="https://img.shields.io/pub/v/pagy.svg" alt="Pub.dev Badge"></a>
-	<a href="https://github.com/hayatkhan67/pagy/actions" rel="noopener" target="_blank"><img src="https://github.com/hayatkhan67/pagy/workflows/build/badge.svg" alt="GitHub Build Badge"></a>
 	<a href="https://opensource.org/licenses/MIT" rel="noopener" target="_blank"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License Badge"></a>
 	<a href="https://github.com/hayatkhan67/pagy" rel="noopener" target="_blank"><img src="https://img.shields.io/badge/platform-flutter-ff69b4.svg" alt="Flutter Platform Badge"></a>
 </p>
@@ -17,7 +16,7 @@
 
 **Pagy** is a Flutter package designed for smooth, efficient, and customizable pagination in your apps. It allows you to load data in chunks and display it seamlessly while handling API responses, pagination strategies, and UI components like shimmer effects.
 
-<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Example Project" />
+<!-- <img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Example Project" /> -->
 
 ## Usage
 

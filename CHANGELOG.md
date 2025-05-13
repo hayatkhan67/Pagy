@@ -2,7 +2,7 @@
 
 - logo fixed
 
-## 0.0.1 2025-5-12
+## 0.0.1
 
 - First Release
 
