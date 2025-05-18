@@ -20,7 +20,6 @@ class PagyListenerBuilder<T> extends StatelessWidget {
   }
 }
 
-
 /*
 import 'package:flutter/material.dart';
 import 'package:pagy/pagy.dart';

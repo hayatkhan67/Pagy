@@ -5,10 +5,29 @@ import 'views/nav_screen.dart';
 
 void main() {
   PagyConfig().initialize(
-    baseUrl: "https://pug-elegant-jennet.ngrok-free.app/",
+    // 🌐 Your base API URL
+    baseUrl: "https://your-api.com/",
+
+    // 📩 The key your API uses to receive the current page number
+    // 👉 For example: "page", "currentPage", "p", etc.
     pageKey: 'page',
+
+    // 📩 The key your API uses to receive the number of items per page
+    // 👉 For example: "limit", "perPage", "pageSize", etc.
     limitKey: 'limit',
+
+    // 🐞 Show API logs in the console when debugging (optional)
+    apiLogs: true,
+
+    // 🔀 How your API expects pagination data to be sent
+    // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
+    // 👉 Use `body` if it's sent inside the request body
+    paginationMode: PaginationPayloadMode.queryParams,
+
+    // 🔁 How far from the bottom before fetching more (in pixels)
+    scrollOffset: 200,
   );
+
   runApp(const PagyExampleApp());
 }
 
@@ -19,6 +38,7 @@ class PagyExampleApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Pagy Example',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),

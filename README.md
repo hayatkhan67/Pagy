@@ -28,6 +28,27 @@ Here’s an example of how you can use **Pagy** in your project to paginate thro
 import 'package:flutter/material.dart';
 import 'package:pagy/pagy.dart';
 
+import 'views/nav_screen.dart';
+
+void main() {
+  PagyConfig().initialize(
+    baseUrl: "https://pug-elegant-jennet.ngrok-free.app/",
+    pageKey: 'page',
+    limitKey: 'limit',
+  );
+
+  runApp(const PagyExampleApp());
+}
+```
+
+---
+
+## 📄 Basic ListView Example
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:pagy/pagy.dart';
+
 import '../models/property_model.dart';
 import '../widgets/property_card_widget.dart';
 
@@ -39,7 +60,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  PagyController<PropertyModel> pagyController = PagyController(
+  final PagyController<PropertyModel> pagyController = PagyController(
     endPoint: "api/properties",
     fromMap: PropertyModel.fromJson,
     limit: 3,
@@ -55,14 +76,13 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-
     pagyController.loadData();
   }
 
   @override
   void dispose() {
-    super.dispose();
     pagyController.dispose();
+    super.dispose();
   }
 
   @override
@@ -82,5 +102,4 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
 ```

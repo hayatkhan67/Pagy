@@ -24,7 +24,7 @@ class _HomeScreenState extends State<HomeScreen> {
     pagyController = PagyController(
       endPoint: "api/properties",
       fromMap: PropertyModel.fromJson,
-      limit: 3,
+      limit: 4,
       responseMapper: (response) {
         return PagyResponseParser(
           list: response['data'],
