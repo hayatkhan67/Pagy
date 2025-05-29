@@ -1,3 +1,7 @@
+## 0.0.3+1
+
+- Dio Compatible version set
+
 ## 0.0.3
 
 - Fixed dependency issues.
