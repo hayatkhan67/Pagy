@@ -35,6 +35,9 @@ class PagyGridView<T> extends StatelessWidget {
       errorBuilder;
   final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
 
+  /// Optional limit for the number of items to show on the screen.
+  final int? itemShowLimit;
+
   /// Creates a new [PagyGridView] widget.
   ///
   /// The following parameters are required:
@@ -55,6 +58,7 @@ class PagyGridView<T> extends StatelessWidget {
     this.mainAxisSpacing = 10,
     this.crossAxisCount = 2,
     this.errorBuilder,
+    this.itemShowLimit,
     this.emptyStateRetryBuilder,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,
@@ -130,7 +134,11 @@ class PagyGridView<T> extends StatelessWidget {
               ),
               crossAxisSpacing: crossAxisSpacing,
               mainAxisSpacing: mainAxisSpacing,
-              itemCount: state.data.length + (state.isMoreFetching ? 1 : 0),
+              itemCount: itemShowLimit != null && itemShowLimit! > 0
+                  ? (state.data.length < itemShowLimit!
+                      ? state.data.length + (state.isMoreFetching ? 1 : 0)
+                      : itemShowLimit!)
+                  : state.data.length + (state.isMoreFetching ? 1 : 0),
               itemBuilder: (context, index) {
                 // Show shimmer effect or loading indicator while fetching more data
                 if (index >= state.data.length) {

@@ -42,6 +42,9 @@ class PagyListView<T> extends StatelessWidget {
   /// Builder for empty state widget with retry callback.
   final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
 
+  /// Optional limit for the number of items to show on the screen.
+  final int? itemShowLimit;
+
   /// Creates a [PagyListView] widget.
   const PagyListView({
     super.key,
@@ -57,6 +60,7 @@ class PagyListView<T> extends StatelessWidget {
     this.itemsGap = 0,
     this.errorBuilder,
     this.emptyStateRetryBuilder,
+    this.itemShowLimit,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,
           'PagyListView: shimmerEffect is enabled but placeholderItemModel is null.\n'
@@ -134,7 +138,11 @@ class PagyListView<T> extends StatelessWidget {
                   ? const NeverScrollableScrollPhysics()
                   : null,
               padding: padding,
-              itemCount: state.data.length + (state.isMoreFetching ? 1 : 0),
+              itemCount: itemShowLimit != null && itemShowLimit! > 0
+                  ? (state.data.length < itemShowLimit!
+                      ? state.data.length + (state.isMoreFetching ? 1 : 0)
+                      : itemShowLimit!)
+                  : state.data.length + (state.isMoreFetching ? 1 : 0),
               itemBuilder: (context, index) {
                 if (index >= state.data.length) {
                   return shimmerEffect
