@@ -3,7 +3,7 @@
   "packages": [
     {
       "name": "async",
-      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/async-2.12.0",
+      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/async-2.13.0",
       "packageUri": "lib/",
       "languageVersion": "3.4"
     },
@@ -45,7 +45,7 @@
     },
     {
       "name": "fake_async",
-      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/fake_async-1.3.2",
+      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/fake_async-1.3.3",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -81,7 +81,7 @@
     },
     {
       "name": "leak_tracker",
-      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/leak_tracker-10.0.8",
+      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/leak_tracker-10.0.9",
       "packageUri": "lib/",
       "languageVersion": "3.2"
     },
@@ -189,7 +189,7 @@
     },
     {
       "name": "vm_service",
-      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/vm_service-14.3.1",
+      "rootUri": "file:///Users/hayatkhan/.pub-cache/hosted/pub.dev/vm_service-15.0.0",
       "packageUri": "lib/",
       "languageVersion": "3.3"
     },
@@ -206,10 +206,9 @@
       "languageVersion": "3.6"
     }
   ],
-  "generated": "2025-05-18T15:30:07.450647Z",
   "generator": "pub",
-  "generatorVersion": "3.7.0",
+  "generatorVersion": "3.8.0",
   "flutterRoot": "file:///Users/hayatkhan/development/flutter",
-  "flutterVersion": "3.29.0",
+  "flutterVersion": "3.32.0",
   "pubCache": "file:///Users/hayatkhan/.pub-cache"
 }

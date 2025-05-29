@@ -1,6 +1,6 @@
 name: pagy
 description: "A Flutter package for easy pagination with API data fetching, customizable UI, shimmer effects, error handling, and smooth scrolling."
-version: 0.0.2
+version: 0.0.3
 homepage: https://github.com/hayatkhan67/pagy
 
 environment:
