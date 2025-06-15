@@ -6,7 +6,7 @@ import 'views/nav_screen.dart';
 void main() {
   PagyConfig().initialize(
     // 🌐 Your base API URL
-    baseUrl: "https://pug-elegant-jennet.ngrok-free.app/",
+    baseUrl: "https://your-api.com/",
 
     // 📩 The key your API uses to receive the current page number
     // 👉 For example: "page", "currentPage", "p", etc.
