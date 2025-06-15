@@ -7,3 +7,8 @@ enum PaginationPayloadMode {
   queryParams,
   payload,
 }
+
+enum PagyApiRequestType {
+  get,
+  post,
+}

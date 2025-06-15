@@ -23,6 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     pagyController = PagyController(
       endPoint: "api/properties",
+      requestType: PagyApiRequestType.post,
       fromMap: PropertyModel.fromJson,
       limit: 4,
       responseMapper: (response) {

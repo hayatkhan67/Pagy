@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'package:flutter/foundation.dart';
 
 import '../config/pagy_config.dart';
@@ -7,6 +6,7 @@ import '../enum/pagy_enum.dart';
 import '../state/helping_model.dart';
 import '../models/response_parser_model.dart';
 import '../services/network_api_service.dart';
+import '../utils.dart';
 
 /// A controller to manage paginated API data and local item modifications.
 ///
@@ -58,6 +58,15 @@ class PagyController<T> {
   /// Returns the current state held by the [controller].
   PagyState<T> get state => controller.value;
 
+  /// The type of API request being made. defaults to [PagyApiRequestType.get].
+  final PagyApiRequestType requestType;
+
+  /// Optional payload data to be sent with the request.
+  /// This is applicable only for [PagyApiRequestType.post].
+  /// It supports all data types that a POST request can handle.
+  /// Use this to include additional data in the request body.
+  final dynamic payloadData;
+
   /// List of observer callbacks to notify on state changes.
   final List<VoidCallback> _observers = [];
 
@@ -70,6 +79,8 @@ class PagyController<T> {
     this.additionalQueryParams,
     this.limit = 4,
     this.paginationMode,
+    this.payloadData,
+    this.requestType = PagyApiRequestType.get,
   }) : controller = ValueNotifier<PagyState<T>>(PagyState<T>());
 
   /// Registers a new observer to be notified on state changes.
@@ -100,6 +111,13 @@ class PagyController<T> {
   Future<void> loadData({
     bool refresh = true,
     Map<String, dynamic>? queryParameter,
+    PaginationPayloadMode? paginationMode,
+
+    /// Optional payload data to be sent with the request.
+    /// This is applicable only for [PagyApiRequestType.post].
+    /// It supports all data types that a POST request can handle.
+    /// Use this to include additional data in the request body.
+    dynamic payloadData,
   }) async {
     if (queryParameter != null) {
       _filter = queryParameter;
@@ -139,14 +157,29 @@ class PagyController<T> {
 
       final mode = paginationMode ?? PagyConfig().paginationMode;
 
-      final response = await NetworkApiService.instance.getApi(
-        endPoints: endPoint,
-        token: token,
-        queryParameter:
-            mode == PaginationPayloadMode.queryParams ? allParams : null,
-        payload: mode == PaginationPayloadMode.payload ? allParams : null,
-        isAuthorize: token != null,
-      );
+      final dynamic response;
+
+      if (requestType == PagyApiRequestType.post) {
+        response = await NetworkApiService.instance.postApi(
+          endPoints: endPoint,
+          token: token,
+          queryParameter:
+              mode == PaginationPayloadMode.queryParams ? allParams : null,
+          data: mode == PaginationPayloadMode.payload
+              ? {...allParams, ...?payloadData}
+              : payloadData,
+          isAuthorize: token != null,
+        );
+      } else {
+        response = await NetworkApiService.instance.getApi(
+          endPoints: endPoint,
+          token: token,
+          queryParameter:
+              mode == PaginationPayloadMode.queryParams ? allParams : null,
+          payload: mode == PaginationPayloadMode.payload ? allParams : null,
+          isAuthorize: token != null,
+        );
+      }
 
       if (responseMapper != null && response != null) {
         final parsed = responseMapper!(response);

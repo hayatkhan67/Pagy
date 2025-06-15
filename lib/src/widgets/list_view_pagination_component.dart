@@ -70,15 +70,13 @@ class PagyListView<T> extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Return an error message if the controller is null
-    if (controller == null) {
-      return const _MissingControllerWidget();
-    }
+    if (controller == null) return const _MissingControllerWidget();
 
     return ValueListenableBuilder<PagyState<T>>(
       valueListenable: controller!.controller,
       builder: (context, state, _) {
         // Show shimmer or loading indicator if data is being fetched
-        if (state.isFetching && state.data.isEmpty) {
+        if (state.isFetching) {
           return shimmerEffect
               ? _buildShimmerList()
               : const Center(child: CircularProgressIndicator());
