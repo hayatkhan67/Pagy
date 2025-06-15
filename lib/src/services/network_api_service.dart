@@ -1,9 +1,8 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 
 import '../config/pagy_config.dart';
 import '../exceptions/exception_handling.dart';
+import '../utils.dart';
 
 class NetworkApiService {
   static final NetworkApiService instance =
@@ -59,6 +58,42 @@ class NetworkApiService {
         endPoints,
         queryParameters: queryParameter,
         data: payload,
+        options: Options(headers: apiHeaders),
+      );
+
+      if (response.statusCode != null &&
+          response.statusCode! >= 200 &&
+          response.statusCode! < 300) {
+        return response.data;
+      }
+    } on DioException catch (e) {
+      log(name: endPoints, '${e.response}');
+      return apiErrors(e);
+    }
+  }
+
+  Future postApi({
+    required String endPoints,
+    Map<String, dynamic>? queryParameter,
+    dynamic data,
+    String? token,
+    bool isAuthorize = false,
+    headers,
+  }) async {
+    try {
+      Map<String, String> apiHeaders = {
+        'Accept': 'application/json',
+      };
+      if (headers != null) apiHeaders.addAll(headers);
+
+      if (isAuthorize && token != null) {
+        apiHeaders["Authorization"] = "Bearer $token";
+      }
+
+      final response = await _dio.post(
+        endPoints,
+        queryParameters: queryParameter,
+        data: data,
         options: Options(headers: apiHeaders),
       );
 

@@ -1,3 +1,7 @@
+## 0.0.4
+
+POST request support Added and enhance API interaction; update dependencies and improve .gitignore
+
 ## 0.0.3+1
 
 - Dio Compatible version set

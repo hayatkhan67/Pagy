@@ -75,7 +75,7 @@ class PagyGridView<T> extends StatelessWidget {
       valueListenable: controller!.controller,
       builder: (context, state, _) {
         // If data is being fetched and no data is available, show loading state
-        if (state.isFetching && state.data.isEmpty) {
+        if (state.isFetching) {
           return shimmerEffect
               ? _buildShimmerGrid()
               : const Center(child: CircularProgressIndicator());
