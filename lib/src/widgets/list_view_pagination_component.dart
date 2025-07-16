@@ -2,50 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:pagy/pagy.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-/// A widget that provides a paginated list view with support for shimmer effects,
-/// error handling, and custom item building.
-class PagyListView<T> extends StatelessWidget {
-  /// The controller that manages paginated state and triggers API requests.
-  final PagyController<T>? controller;
+import '../helpers/pagy_helpers.dart';
+import 'common/pagy_empty_state_widget.dart';
+import 'common/pagy_error_widget.dart';
+import 'common/pagy_loading_widget.dart';
+import 'common/pagy_missing_controller_widget.dart';
 
-  /// Builder function to create each list item from the model.
+class PagyListView<T> extends StatelessWidget {
+  final PagyController<T>? controller;
   final Widget Function(BuildContext context, T item) itemBuilder;
 
-  /// Padding for the list.
   final EdgeInsetsGeometry? padding;
-
-  /// Disable user scrolling.
   final bool disableScrolling;
-
-  /// Whether to show shimmer effect while loading.
   final bool shimmerEffect;
-
-  /// Number of shimmer placeholder items to show.
   final int placeholderItemCount;
-
-  /// The model to use for rendering shimmer placeholder items.
   final T? placeholderItemModel;
-
-  /// Whether the list should shrink to fit its content.
   final bool shrinkWrap;
-
-  /// Custom scroll physics.
   final ScrollPhysics? scrollPhysics;
-
-  /// Gap between list items.
   final double itemsGap;
-
-  /// Widget builder to display on error.
-  final Widget Function(String errorMessage, VoidCallback onRetry)?
-      errorBuilder;
-
-  /// Builder for empty state widget with retry callback.
-  final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
-
-  /// Optional limit for the number of items to show on the screen.
   final int? itemShowLimit;
 
-  /// Creates a [PagyListView] widget.
+  final Widget Function(String errorMessage, VoidCallback onRetry)?
+      errorBuilder;
+  final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
+  final Widget? customLoader;
+
   const PagyListView({
     super.key,
     required this.controller,
@@ -58,65 +39,59 @@ class PagyListView<T> extends StatelessWidget {
     this.shrinkWrap = false,
     this.scrollPhysics,
     this.itemsGap = 0,
+    this.itemShowLimit,
     this.errorBuilder,
     this.emptyStateRetryBuilder,
-    this.itemShowLimit,
+    this.customLoader,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,
-          'PagyListView: shimmerEffect is enabled but placeholderItemModel is null.\n'
-          'You must provide a valid placeholderItemModel when shimmerEffect is true.',
+          'PagyListView: shimmerEffect is enabled but placeholderItemModel is null.',
         );
 
   @override
   Widget build(BuildContext context) {
-    // Return an error message if the controller is null
-    if (controller == null) return const _MissingControllerWidget();
+    if (controller == null) {
+      return const MissingControllerWidget(name: 'PagyListView');
+    }
 
     return ValueListenableBuilder<PagyState<T>>(
       valueListenable: controller!.controller,
       builder: (context, state, _) {
-        // Show shimmer or loading indicator if data is being fetched
+        // Initial loading
         if (state.isFetching) {
           return shimmerEffect
               ? _buildShimmerList()
-              : const Center(child: CircularProgressIndicator());
+              : (customLoader ??
+                  PagyConfig().globalLoader ??
+                  const DefaultPagyLoader());
         }
 
-        // Display an error message if an error occurs
-        if (state.errorMessage != null &&
-            (state.errorMessage?.isNotEmpty ?? false) &&
-            state.data.isEmpty) {
-          if (errorBuilder != null) {
-            return errorBuilder!(
-              state.errorMessage!,
-              () => controller!.loadData(),
-            );
-          }
-          return _defaultErrorWidget(state.errorMessage!);
+        // Error state
+        if ((state.errorMessage?.isNotEmpty ?? false) && state.data.isEmpty) {
+          return errorBuilder?.call(
+                state.errorMessage!,
+                () => controller!.loadData(),
+              ) ??
+              PagyConfig().globalErrorBuilder?.call(
+                    state.errorMessage!,
+                    () => controller!.loadData(),
+                  ) ??
+              DefaultErrorWidget(
+                errorMessage: state.errorMessage!,
+                onRetry: () => controller!.loadData(),
+              );
         }
 
-        // Handle empty data state
+        // Empty state
         if (state.data.isEmpty) {
-          if (emptyStateRetryBuilder != null) {
-            return emptyStateRetryBuilder!.call(() => controller!.loadData());
-          }
-
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('No data available', style: TextStyle(fontSize: 16)),
-                const SizedBox(height: 12),
-                ElevatedButton(
-                  onPressed: () => controller!.loadData(),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          );
+          return emptyStateRetryBuilder?.call(() => controller!.loadData()) ??
+              PagyConfig()
+                  .globalEmptyBuilder
+                  ?.call(() => controller!.loadData()) ??
+              DefaultEmptyWidget(onRetry: () => controller!.loadData());
         }
 
-        // Display list with scroll listener for pagination
+        // Data loaded — paginated list
         return NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!state.isMoreFetching &&
@@ -134,25 +109,21 @@ class PagyListView<T> extends StatelessWidget {
               shrinkWrap: shrinkWrap,
               physics: disableScrolling
                   ? const NeverScrollableScrollPhysics()
-                  : null,
+                  : scrollPhysics,
               padding: padding,
-              itemCount: itemShowLimit != null && itemShowLimit! > 0
-                  ? (state.data.length < itemShowLimit!
-                      ? state.data.length + (state.isMoreFetching ? 1 : 0)
-                      : itemShowLimit!)
-                  : state.data.length + (state.isMoreFetching ? 1 : 0),
+              itemCount: calculatePagyItemCount(state, itemShowLimit),
               itemBuilder: (context, index) {
                 if (index >= state.data.length) {
                   return shimmerEffect
                       ? _buildShimmerItem(context)
-                      : const Padding(
-                          padding: EdgeInsets.all(16),
-                          child: Center(child: CircularProgressIndicator()),
+                      : Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: customLoader ??
+                              PagyConfig().globalLoader ??
+                              const DefaultPagyLoader(),
                         );
                 }
-
-                final item = state.data[index];
-                return itemBuilder(context, item);
+                return itemBuilder(context, state.data[index]);
               },
             ),
           ),
@@ -161,7 +132,6 @@ class PagyListView<T> extends StatelessWidget {
     );
   }
 
-  /// Builds a list view with shimmer effect while loading data.
   Widget _buildShimmerList() {
     return Skeletonizer(
       enabled: true,
@@ -179,57 +149,10 @@ class PagyListView<T> extends StatelessWidget {
     );
   }
 
-  /// Builds a single shimmer item while loading.
   Widget _buildShimmerItem(BuildContext context) {
     return Skeletonizer(
       enabled: true,
       child: itemBuilder(context, placeholderItemModel as T),
-    );
-  }
-
-  /// Displays a default error widget with an error message and retry button.
-  Widget _defaultErrorWidget(String errorMessage) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, color: Colors.redAccent, size: 40),
-          const SizedBox(height: 8),
-          Text(
-            errorMessage,
-            maxLines: 4,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 16, color: Colors.red),
-          ),
-          const SizedBox(height: 12),
-          ElevatedButton(
-            onPressed: () => controller!.loadData(),
-            child: const Text("Retry"),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// Widget displayed when the controller is missing or not initialized.
-class _MissingControllerWidget extends StatelessWidget {
-  const _MissingControllerWidget();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Padding(
-        padding: EdgeInsets.all(24),
-        child: Text(
-          '⚠️ PagyListView Error:\n\nController is not initialized.\n\nPlease pass a valid PagyController<T>.',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            color: Colors.redAccent,
-            fontSize: 16,
-          ),
-        ),
-      ),
     );
   }
 }

@@ -61,9 +61,9 @@ class _HomeScreenState extends State<HomeScreen> {
             itemsGap: 3,
             padding: const EdgeInsets.symmetric(horizontal: 14),
             controller: pagyController,
-            placeholderItemCount: 10,
-            shimmerEffect: true,
-            placeholderItemModel: PropertyModel(),
+            // placeholderItemCount: 10,
+            // shimmerEffect: true,
+            // placeholderItemModel: PropertyModel(),
             itemBuilder: (context, item) {
               return PropertyCardWidget(data: item);
             },

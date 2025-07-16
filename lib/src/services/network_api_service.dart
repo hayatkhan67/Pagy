@@ -42,6 +42,7 @@ class NetworkApiService {
     Map<String, dynamic>? payload,
     String? token,
     bool isAuthorize = false,
+    CancelToken? cancelToken,
     headers,
   }) async {
     try {
@@ -59,6 +60,7 @@ class NetworkApiService {
         queryParameters: queryParameter,
         data: payload,
         options: Options(headers: apiHeaders),
+        cancelToken: cancelToken,
       );
 
       if (response.statusCode != null &&
@@ -79,6 +81,7 @@ class NetworkApiService {
     String? token,
     bool isAuthorize = false,
     headers,
+    CancelToken? cancelToken,
   }) async {
     try {
       Map<String, String> apiHeaders = {
@@ -95,6 +98,7 @@ class NetworkApiService {
         queryParameters: queryParameter,
         data: data,
         options: Options(headers: apiHeaders),
+        cancelToken: cancelToken,
       );
 
       if (response.statusCode != null &&

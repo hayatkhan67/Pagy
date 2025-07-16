@@ -6,8 +6,7 @@ import 'views/nav_screen.dart';
 void main() {
   PagyConfig().initialize(
     // 🌐 Your base API URL
-    baseUrl: "https://your-api.com/",
-
+    baseUrl: "https://pug-elegant-jennet.ngrok-free.app/",
     // 📩 The key your API uses to receive the current page number
     // 👉 For example: "page", "currentPage", "p", etc.
     pageKey: 'page',
@@ -23,6 +22,38 @@ void main() {
     // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
     // 👉 Use `body` if it's sent inside the request body
     paginationMode: PaginationPayloadMode.queryParams,
+    errorBuilder: (errorMessage, onRetry) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              errorMessage,
+              style: TextStyle(fontSize: 18, color: Colors.red[600]),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
+      );
+    },
+    emptyBuilder: (onRetry) {
+      return Center(
+        child: Column(
+          children: [
+            Text(
+              'No data Test available',
+              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
+            ),
+
+            const SizedBox(height: 12),
+            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
+      );
+    },
+
+    loader: const Center(child: CircularProgressIndicator(color: Colors.amber)),
 
     // 🔁 How far from the bottom before fetching more (in pixels)
     scrollOffset: 200,

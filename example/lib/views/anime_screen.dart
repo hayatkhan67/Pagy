@@ -44,9 +44,9 @@ class _AnimeScreenState extends State<AnimeScreen> {
     return PagyGridView<AnimeModel>(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       controller: pagyController,
-      shimmerEffect: true,
-      placeholderItemCount: 3,
-      placeholderItemModel: AnimeModel(),
+      // shimmerEffect: true,
+      // placeholderItemCount: 3,
+      // placeholderItemModel: AnimeModel(),
       itemBuilder: (context, item) {
         return AnimeCardWidget(data: item);
       },

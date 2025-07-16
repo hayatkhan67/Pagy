@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
 import '../config/pagy_config.dart';
@@ -70,6 +71,9 @@ class PagyController<T> {
   /// List of observer callbacks to notify on state changes.
   final List<VoidCallback> _observers = [];
 
+  /// Internal cancel token for API requests.
+  CancelToken? _cancelToken;
+
   /// Constructor for [PagyController].
   PagyController({
     required this.endPoint,
@@ -129,6 +133,10 @@ class PagyController<T> {
 
     if (state.isFetching || state.isMoreFetching) return;
 
+    // ✅ Cancel any previous request
+    _cancelToken?.cancel("Cancelled due to new request");
+    _cancelToken = CancelToken();
+
     final int currentPage = refresh ? 1 : state.currentPage + 1;
     if (!refresh && currentPage > state.totalPages) return;
 
@@ -169,6 +177,7 @@ class PagyController<T> {
               ? {...allParams, ...?payloadData}
               : payloadData,
           isAuthorize: token != null,
+          cancelToken: _cancelToken,
         );
       } else {
         response = await NetworkApiService.instance.getApi(
@@ -178,6 +187,7 @@ class PagyController<T> {
               mode == PaginationPayloadMode.queryParams ? allParams : null,
           payload: mode == PaginationPayloadMode.payload ? allParams : null,
           isAuthorize: token != null,
+          cancelToken: _cancelToken,
         );
       }
 
