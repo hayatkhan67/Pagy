@@ -21,6 +21,7 @@ class PagyListView<T> extends StatelessWidget {
   final ScrollPhysics? scrollPhysics;
   final double itemsGap;
   final int? itemShowLimit;
+  final Widget Function(BuildContext context, int index)? separatorBuilder;
 
   final Widget Function(String errorMessage, VoidCallback onRetry)?
       errorBuilder;
@@ -43,6 +44,7 @@ class PagyListView<T> extends StatelessWidget {
     this.errorBuilder,
     this.emptyStateRetryBuilder,
     this.customLoader,
+    this.separatorBuilder,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,
           'PagyListView: shimmerEffect is enabled but placeholderItemModel is null.',
@@ -105,7 +107,8 @@ class PagyListView<T> extends StatelessWidget {
           child: RefreshIndicator(
             onRefresh: () => controller!.loadData(),
             child: ListView.separated(
-              separatorBuilder: (_, __) => SizedBox(height: itemsGap),
+              separatorBuilder:
+                  separatorBuilder ?? (_, __) => SizedBox(height: itemsGap),
               shrinkWrap: shrinkWrap,
               physics: disableScrolling
                   ? const NeverScrollableScrollPhysics()
@@ -136,7 +139,8 @@ class PagyListView<T> extends StatelessWidget {
     return Skeletonizer(
       enabled: true,
       child: ListView.separated(
-        separatorBuilder: (_, __) => SizedBox(height: itemsGap),
+        separatorBuilder:
+            separatorBuilder ?? (_, __) => SizedBox(height: itemsGap),
         shrinkWrap: shrinkWrap,
         physics: disableScrolling
             ? const NeverScrollableScrollPhysics()

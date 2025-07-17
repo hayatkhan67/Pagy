@@ -60,6 +60,7 @@ class _HomeScreenState extends State<HomeScreen> {
           child: PagyListView<PropertyModel>(
             itemsGap: 3,
             padding: const EdgeInsets.symmetric(horizontal: 14),
+            separatorBuilder: (context, index) => const Divider(),
             controller: pagyController,
             // placeholderItemCount: 10,
             // shimmerEffect: true,
