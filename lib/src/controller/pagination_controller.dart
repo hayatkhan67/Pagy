@@ -74,6 +74,8 @@ class PagyController<T> {
   /// Internal cancel token for API requests.
   CancelToken? _cancelToken;
 
+final Map<String, dynamic>? headers;
+
   /// Constructor for [PagyController].
   PagyController({
     required this.endPoint,
@@ -171,6 +173,7 @@ class PagyController<T> {
         response = await NetworkApiService.instance.postApi(
           endPoints: endPoint,
           token: token,
+headers:headers,
           queryParameter:
               mode == PaginationPayloadMode.queryParams ? allParams : null,
           data: mode == PaginationPayloadMode.payload
@@ -183,6 +186,7 @@ class PagyController<T> {
         response = await NetworkApiService.instance.getApi(
           endPoints: endPoint,
           token: token,
+headers:headers,
           queryParameter:
               mode == PaginationPayloadMode.queryParams ? allParams : null,
           payload: mode == PaginationPayloadMode.payload ? allParams : null,
