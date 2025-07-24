@@ -74,7 +74,7 @@ class PagyController<T> {
   /// Internal cancel token for API requests.
   CancelToken? _cancelToken;
 
-final Map<String, dynamic>? headers;
+final dynamic headers;
 
   /// Constructor for [PagyController].
   PagyController({
