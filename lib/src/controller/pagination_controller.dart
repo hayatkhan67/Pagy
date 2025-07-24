@@ -86,6 +86,7 @@ final Map<String, dynamic>? headers;
     this.limit = 4,
     this.paginationMode,
     this.payloadData,
+this.headers,
     this.requestType = PagyApiRequestType.get,
   }) : controller = ValueNotifier<PagyState<T>>(PagyState<T>());
 
