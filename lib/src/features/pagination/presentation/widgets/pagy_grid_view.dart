@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:skeletonizer/skeletonizer.dart';
@@ -103,21 +101,52 @@ class PagyGridView<T> extends StatelessWidget {
           child: RefreshIndicator(
             onRefresh: () => controller!.loadData(),
             child: MasonryGridView.builder(
-              shrinkWrap: shrinkWrap,
-              physics: disableScrolling
-                  ? const NeverScrollableScrollPhysics()
-                  : scrollPhysics,
-              padding: padding ??
-                  const EdgeInsets.symmetric(horizontal: 16)
-                      .copyWith(bottom: 16),
-              gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: crossAxisCount,
-              ),
-              crossAxisSpacing: crossAxisSpacing,
-              mainAxisSpacing: mainAxisSpacing,
-              itemCount: calculatePagyItemCount(state, itemShowLimit),
-              itemBuilder: (context, index) {
-                if (index >= state.data.length) {
+                shrinkWrap: shrinkWrap,
+                physics: disableScrolling
+                    ? const NeverScrollableScrollPhysics()
+                    : scrollPhysics,
+                padding: padding ??
+                    const EdgeInsets.symmetric(horizontal: 16)
+                        .copyWith(bottom: 16),
+                gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: crossAxisCount,
+                ),
+                crossAxisSpacing: crossAxisSpacing,
+                mainAxisSpacing: mainAxisSpacing,
+                itemCount: calculatePagyItemCount(state, itemShowLimit) +
+                    ((state.errorMessage?.isNotEmpty ?? false) &&
+                            state.data.isNotEmpty
+                        ? 1
+                        : 0),
+
+                // itemCount: calculatePagyItemCount(state, itemShowLimit),
+                itemBuilder: (context, index) {
+                  // ✅ Case 1: Normal data items
+                  if (index < state.data.length) {
+                    return itemBuilder(context, state.data[index]);
+                  }
+
+                  // ✅ Case 2: Extra slot for page > 1 error
+                  if ((state.errorMessage?.isNotEmpty ?? false) &&
+                      state.data.isNotEmpty) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      child: errorBuilder?.call(
+                            state.errorMessage!,
+                            () => controller!.loadData(refresh: false),
+                          ) ??
+                          PagyConfig().globalErrorBuilder?.call(
+                                state.errorMessage!,
+                                () => controller!.loadData(refresh: false),
+                              ) ??
+                          DefaultErrorWidget(
+                            errorMessage: state.errorMessage!,
+                            onRetry: () => controller!.loadData(refresh: false),
+                          ),
+                    );
+                  }
+
+                  // ✅ Case 3: Loader while fetching more
                   return shimmerEffect
                       ? _buildShimmerItem(context)
                       : Padding(
@@ -128,11 +157,7 @@ class PagyGridView<T> extends StatelessWidget {
                               PagyConfig().globalLoader ??
                               const DefaultPagyLoader(),
                         );
-                }
-
-                return itemBuilder(context, state.data[index]);
-              },
-            ),
+                }),
           ),
         );
       },
