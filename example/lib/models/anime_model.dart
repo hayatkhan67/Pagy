@@ -5,7 +5,7 @@
 class AnimeModel {
   final String? title;
   final String? image;
-  final int? id;
+  final String? id;
   final String? type;
   final DateTime? createdAt;
   final DateTime? updatedAt;
