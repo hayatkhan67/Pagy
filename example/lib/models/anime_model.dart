@@ -5,7 +5,7 @@
 class AnimeModel {
   final String? title;
   final String? image;
-  final String? id;
+  final int? id;
   final String? type;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -24,10 +24,12 @@ class AnimeModel {
     image: json["image"],
     id: json["_id"],
     type: json["type"],
-    createdAt:
-        json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
-    updatedAt:
-        json["updatedAt"] == null ? null : DateTime.parse(json["updatedAt"]),
+    createdAt: json["createdAt"] == null
+        ? null
+        : DateTime.parse(json["createdAt"]),
+    updatedAt: json["updatedAt"] == null
+        ? null
+        : DateTime.parse(json["updatedAt"]),
   );
 
   Map<String, dynamic> toJson() => {

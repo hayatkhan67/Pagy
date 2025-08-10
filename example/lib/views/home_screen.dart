@@ -1,11 +1,12 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+
 import 'package:pagy/pagy.dart';
 
-import '../utils/constant_data.dart';
 import '../models/property_model.dart';
-import '../widgets/catergorie_name_row.dart';
+import '../utils/constant_data.dart';
+import '../widgets/categories_name_row.dart';
 import '../widgets/property_card_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +23,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     pagyController = PagyController(
-      endPoint: "api/properties",
+      endPoint: "properties",
       requestType: PagyApiRequestType.post,
       fromMap: PropertyModel.fromJson,
       limit: 4,
@@ -43,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         const SizedBox(height: 10),
-        CatergorieNameRow(
+        CategoriesNameRow(
           itemList: types,
           onChanged: (value) {
             log(name: 'selected tag', value.toString());

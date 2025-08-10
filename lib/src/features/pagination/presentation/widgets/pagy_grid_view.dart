@@ -1,14 +1,13 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:pagy/pagy.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-import '../helpers/pagy_helpers.dart';
-import 'common/pagy_empty_state_widget.dart';
-import 'common/pagy_error_widget.dart';
-import 'common/pagy_loading_widget.dart';
-import 'common/pagy_missing_controller_widget.dart';
+import '../../../../../pagy.dart';
+import '../../../../core/utils/pagy_helpers.dart';
 
-class PagyListView<T> extends StatelessWidget {
+class PagyGridView<T> extends StatelessWidget {
   final PagyController<T>? controller;
   final Widget Function(BuildContext context, T item) itemBuilder;
 
@@ -19,16 +18,19 @@ class PagyListView<T> extends StatelessWidget {
   final T? placeholderItemModel;
   final bool shrinkWrap;
   final ScrollPhysics? scrollPhysics;
-  final double itemsGap;
+
+  final double crossAxisSpacing;
+  final double mainAxisSpacing;
+  final int crossAxisCount;
+
   final int? itemShowLimit;
-  final Widget Function(BuildContext context, int index)? separatorBuilder;
 
   final Widget Function(String errorMessage, VoidCallback onRetry)?
       errorBuilder;
   final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
   final Widget? customLoader;
 
-  const PagyListView({
+  const PagyGridView({
     super.key,
     required this.controller,
     required this.itemBuilder,
@@ -39,52 +41,47 @@ class PagyListView<T> extends StatelessWidget {
     this.placeholderItemModel,
     this.shrinkWrap = false,
     this.scrollPhysics,
-    this.itemsGap = 0,
+    this.crossAxisSpacing = 9,
+    this.mainAxisSpacing = 10,
+    this.crossAxisCount = 2,
     this.itemShowLimit,
     this.errorBuilder,
     this.emptyStateRetryBuilder,
     this.customLoader,
-    this.separatorBuilder,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,
-          'PagyListView: shimmerEffect is enabled but placeholderItemModel is null.',
+          'PagyGridView: shimmerEffect is enabled but placeholderItemModel is null.',
         );
 
   @override
   Widget build(BuildContext context) {
     if (controller == null) {
-      return const MissingControllerWidget(name: 'PagyListView');
+      return const MissingControllerWidget(name: 'PagyGridView');
     }
 
     return ValueListenableBuilder<PagyState<T>>(
       valueListenable: controller!.controller,
       builder: (context, state, _) {
-        // Initial loading
         if (state.isFetching) {
           return shimmerEffect
-              ? _buildShimmerList()
+              ? _buildShimmerGrid()
               : (customLoader ??
                   PagyConfig().globalLoader ??
                   const DefaultPagyLoader());
         }
 
-        // Error state
         if ((state.errorMessage?.isNotEmpty ?? false) && state.data.isEmpty) {
           return errorBuilder?.call(
-                state.errorMessage!,
-                () => controller!.loadData(),
-              ) ??
-              PagyConfig().globalErrorBuilder?.call(
-                    state.errorMessage!,
-                    () => controller!.loadData(),
-                  ) ??
+                  state.errorMessage!, () => controller!.loadData()) ??
+              PagyConfig()
+                  .globalErrorBuilder
+                  ?.call(state.errorMessage!, () => controller!.loadData()) ??
               DefaultErrorWidget(
                 errorMessage: state.errorMessage!,
                 onRetry: () => controller!.loadData(),
               );
         }
 
-        // Empty state
         if (state.data.isEmpty) {
           return emptyStateRetryBuilder?.call(() => controller!.loadData()) ??
               PagyConfig()
@@ -93,7 +90,6 @@ class PagyListView<T> extends StatelessWidget {
               DefaultEmptyWidget(onRetry: () => controller!.loadData());
         }
 
-        // Data loaded — paginated list
         return NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
             if (!state.isMoreFetching &&
@@ -106,26 +102,34 @@ class PagyListView<T> extends StatelessWidget {
           },
           child: RefreshIndicator(
             onRefresh: () => controller!.loadData(),
-            child: ListView.separated(
-              separatorBuilder:
-                  separatorBuilder ?? (_, __) => SizedBox(height: itemsGap),
+            child: MasonryGridView.builder(
               shrinkWrap: shrinkWrap,
               physics: disableScrolling
                   ? const NeverScrollableScrollPhysics()
                   : scrollPhysics,
-              padding: padding,
+              padding: padding ??
+                  const EdgeInsets.symmetric(horizontal: 16)
+                      .copyWith(bottom: 16),
+              gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
+              ),
+              crossAxisSpacing: crossAxisSpacing,
+              mainAxisSpacing: mainAxisSpacing,
               itemCount: calculatePagyItemCount(state, itemShowLimit),
               itemBuilder: (context, index) {
                 if (index >= state.data.length) {
                   return shimmerEffect
                       ? _buildShimmerItem(context)
                       : Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: EdgeInsets.symmetric(
+                            vertical: MediaQuery.sizeOf(context).height * 0.09,
+                          ),
                           child: customLoader ??
                               PagyConfig().globalLoader ??
                               const DefaultPagyLoader(),
                         );
                 }
+
                 return itemBuilder(context, state.data[index]);
               },
             ),
@@ -135,17 +139,21 @@ class PagyListView<T> extends StatelessWidget {
     );
   }
 
-  Widget _buildShimmerList() {
+  Widget _buildShimmerGrid() {
     return Skeletonizer(
       enabled: true,
-      child: ListView.separated(
-        separatorBuilder:
-            separatorBuilder ?? (_, __) => SizedBox(height: itemsGap),
+      child: MasonryGridView.builder(
         shrinkWrap: shrinkWrap,
         physics: disableScrolling
             ? const NeverScrollableScrollPhysics()
             : scrollPhysics,
-        padding: padding,
+        padding: padding ??
+            const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 16),
+        gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: crossAxisCount,
+        ),
+        crossAxisSpacing: crossAxisSpacing,
+        mainAxisSpacing: mainAxisSpacing,
         itemCount: placeholderItemCount,
         itemBuilder: (context, _) =>
             itemBuilder(context, placeholderItemModel as T),

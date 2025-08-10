@@ -30,13 +30,12 @@ class AnimeCardWidget extends StatelessWidget {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(14),
                 image: DecorationImage(
-                  image:
-                      data.image != null && data.image!.isNotEmpty
-                          ? NetworkImage(data.image!)
-                          : const AssetImage(
-                                'assets/images/1746876883837-p1.jpeg',
-                              )
-                              as ImageProvider,
+                  image: data.image != null && data.image!.isNotEmpty
+                      ? NetworkImage(
+                          "https://pagy-backend-ten.vercel.app/uploads/${data.image!}",
+                        )
+                      : const AssetImage('assets/images/1746876883837-p1.jpeg')
+                            as ImageProvider,
                   fit: BoxFit.cover,
                 ),
               ),

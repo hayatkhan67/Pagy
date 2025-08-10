@@ -1,25 +1,25 @@
-import 'dart:developer';
-
 import 'package:flutter/material.dart';
 import 'package:pagy/pagy.dart';
 
 import '../models/anime_model.dart';
 import '../widgets/anime_card_widget.dart';
 
-class AnimeScreen extends StatefulWidget {
-  const AnimeScreen({super.key});
+class AnimeScreenWithInterceptor extends StatefulWidget {
+  const AnimeScreenWithInterceptor({super.key});
 
   @override
-  State<AnimeScreen> createState() => _AnimeScreenState();
+  State<AnimeScreenWithInterceptor> createState() =>
+      _AnimeScreenWithInterceptorState();
 }
 
-class _AnimeScreenState extends State<AnimeScreen> {
+class _AnimeScreenWithInterceptorState
+    extends State<AnimeScreenWithInterceptor> {
   PagyController<AnimeModel> pagyController = PagyController(
     endPoint: "anime",
     fromMap: AnimeModel.fromJson,
+
     limit: 5,
     responseMapper: (response) {
-      log(response.runtimeType.toString(), name: 'anime screen');
       return PagyResponseParser(
         list: response['data'],
         totalPages: response['pagination']['totalPages'],
@@ -47,9 +47,9 @@ class _AnimeScreenState extends State<AnimeScreen> {
     return PagyGridView<AnimeModel>(
       padding: const EdgeInsets.symmetric(horizontal: 14),
       controller: pagyController,
-      shimmerEffect: true,
-      placeholderItemCount: 3,
-      placeholderItemModel: AnimeModel(),
+      // shimmerEffect: true,
+      // placeholderItemCount: 3,
+      // placeholderItemModel: AnimeModel(),
       itemBuilder: (context, item) {
         return AnimeCardWidget(data: item);
       },

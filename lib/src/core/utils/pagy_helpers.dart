@@ -1,4 +1,4 @@
-import 'package:pagy/pagy.dart';
+import '../../features/pagination/domain/entities/pagy_state.dart';
 
 int calculatePagyItemCount<T>(
   PagyState<T> state,

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
-class CatergorieNameRow extends StatefulWidget {
-  const CatergorieNameRow({
+class CategoriesNameRow extends StatefulWidget {
+  const CategoriesNameRow({
     super.key,
     this.onChanged,
     this.itemList,
@@ -14,10 +14,10 @@ class CatergorieNameRow extends StatefulWidget {
   final bool isSubProductLoading;
 
   @override
-  State<CatergorieNameRow> createState() => _CatergorieNameRowState();
+  State<CategoriesNameRow> createState() => _CategoriesNameRowState();
 }
 
-class _CatergorieNameRowState extends State<CatergorieNameRow> {
+class _CategoriesNameRowState extends State<CategoriesNameRow> {
   get onChanged => widget.onChanged;
   List<String>? get items => widget.itemList;
   String selectedItem = 'all';
@@ -52,17 +52,16 @@ class _CatergorieNameRowState extends State<CatergorieNameRow> {
         mainAxisAlignment: MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: List.generate(items?.length ?? 0, (index) {
-          String? categorieItem = items?[index];
-          bool isSelected = selectedItem == categorieItem;
+          String? categoriesItem = items?[index];
+          bool isSelected = selectedItem == categoriesItem;
 
           return Padding(
             padding: const EdgeInsets.only(right: 6),
             child: InkWell(
               borderRadius: BorderRadius.circular(100),
-              onTap:
-                  widget.isSubProductLoading
-                      ? null
-                      : () => selectItem(categorieItem),
+              onTap: widget.isSubProductLoading
+                  ? null
+                  : () => selectItem(categoriesItem),
               child: Container(
                 padding: const EdgeInsets.symmetric(
                   vertical: 8,
@@ -71,14 +70,9 @@ class _CatergorieNameRowState extends State<CatergorieNameRow> {
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.purpleAccent : Colors.white,
                   borderRadius: BorderRadius.circular(100),
-                  // border: Border.all(
-                  // color: isSelected
-                  //     ? AppColors.extraligthblue
-                  //     : context.appColors.cardBackground,
-                  // ),
                 ),
                 child: Text(
-                  (categorieItem ?? ''),
+                  (categoriesItem ?? ''),
                   style: TextStyle(
                     fontSize: 12,
                     color: !isSelected ? Colors.purpleAccent : Colors.white,
