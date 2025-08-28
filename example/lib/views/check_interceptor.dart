@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pagy/pagy.dart';
 
-import '../models/anime_model.dart';
-import '../widgets/anime_card_widget.dart';
+import '../models/property_model.dart';
+import '../widgets/property_card_widget.dart';
 
 class AnimeScreenWithInterceptor extends StatefulWidget {
   const AnimeScreenWithInterceptor({super.key});
@@ -14,44 +14,41 @@ class AnimeScreenWithInterceptor extends StatefulWidget {
 
 class _AnimeScreenWithInterceptorState
     extends State<AnimeScreenWithInterceptor> {
-  PagyController<AnimeModel> pagyController = PagyController(
-    endPoint: "anime",
-    fromMap: AnimeModel.fromJson,
-
-    limit: 5,
-    responseMapper: (response) {
-      return PagyResponseParser(
-        list: response['data'],
-        totalPages: response['pagination']['totalPages'],
-      );
-    },
-    paginationMode: PaginationPayloadMode.queryParams,
-  );
+  late PagyController<PropertyModel> pagyController;
 
   @override
   void initState() {
     super.initState();
+    pagyController = PagyController(
+      endPoint: "properties/secured",
+      requestType: PagyApiRequestType.post,
+      fromMap: PropertyModel.fromJson,
+      headers: {'Authorization': 'Bearer hayat'},
+      limit: 4,
+      responseMapper: (response) {
+        return PagyResponseParser(
+          list: response['data'],
+          totalPages: response['pagination']['totalPages'],
+        );
+      },
+      paginationMode: PaginationPayloadMode.queryParams,
+    );
 
-    ///load Data
     pagyController.loadData();
   }
 
   @override
-  void dispose() {
-    super.dispose();
-    pagyController.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return PagyGridView<AnimeModel>(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+    return PagyListView<PropertyModel>(
+      itemSpacing: 10,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+      // separatorBuilder: (context, index) => const Divider(),
       controller: pagyController,
-      // shimmerEffect: true,
-      // placeholderItemCount: 3,
-      // placeholderItemModel: AnimeModel(),
+      shimmerItemCount: 10,
+      enableShimmer: true,
+      shimmerItemModel: PropertyModel(),
       itemBuilder: (context, item) {
-        return AnimeCardWidget(data: item);
+        return PropertyCardWidget(data: item);
       },
     );
   }

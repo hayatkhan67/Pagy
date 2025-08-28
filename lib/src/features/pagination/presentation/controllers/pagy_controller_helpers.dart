@@ -1,33 +1,34 @@
 part of 'pagy_controller.dart';
 
 extension PagyControllerHelpers<T> on PagyController<T> {
+  /// Safe built-in methods (recommended for common usage)
   void updateData(List<T> newData) {
     itemsList
       ..clear()
       ..addAll(newData);
-    controller.value = controller.value.copyWith(data: [...itemsList]);
+    _emit();
   }
 
   void addItem(T item, {bool atStart = false}) {
     atStart ? itemsList.insert(0, item) : itemsList.add(item);
-    controller.value = controller.value.copyWith(data: [...itemsList]);
+    _emit();
   }
 
   void addItems(List<T> items, {bool atStart = false}) {
     atStart ? itemsList.insertAll(0, items) : itemsList.addAll(items);
-    controller.value = controller.value.copyWith(data: [...itemsList]);
+    _emit();
   }
 
   void updateItemAt(int index, T newItem) {
     if (index >= 0 && index < itemsList.length) {
       itemsList[index] = newItem;
-      controller.value = controller.value.copyWith(data: [...itemsList]);
+      _emit();
     }
   }
 
   void removeWhere(bool Function(T item) test) {
     itemsList.removeWhere(test);
-    controller.value = controller.value.copyWith(data: [...itemsList]);
+    _emit();
   }
 
   void clearItems() {
@@ -39,7 +40,24 @@ extension PagyControllerHelpers<T> on PagyController<T> {
     );
   }
 
+  /// Internal helper to avoid repeating code
+  void _emit() {
+    controller.value = controller.value.copyWith(data: [...itemsList]);
+  }
+
+  /// 🚀 Direct access for advanced use cases
+  void modifyDirect(ValueUpdater<PagyState<T>> updater) {
+    final updated = updater(controller.value);
+    itemsList
+      ..clear()
+      ..addAll(updated.data);
+    controller.value = updated;
+  }
+
   void dispose() {
     controller.dispose();
   }
 }
+
+/// Signature for direct modification
+typedef ValueUpdater<S> = S Function(S state);

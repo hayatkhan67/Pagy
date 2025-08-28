@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:pagy/src/core/services/dependency_injections.dart';
-import 'package:pagy/src/core/utils/pagy_utils.dart';
-import 'package:pagy/src/features/pagination/param/pagy_params.dart';
 
+import '../../../../core/services/dependency_injections.dart';
+import '../../../../core/utils/pagy_utils.dart';
+import '../../param/pagy_params.dart';
 import '../../../../../pagy.dart';
+
 part 'pagy_controller_loader.dart';
 part 'pagy_controller_helpers.dart';
 

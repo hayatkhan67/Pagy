@@ -59,13 +59,13 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 10),
         Expanded(
           child: PagyListView<PropertyModel>(
-            itemsGap: 3,
-            padding: const EdgeInsets.symmetric(horizontal: 14),
+            itemSpacing: 3,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14),
             separatorBuilder: (context, index) => const Divider(),
             controller: pagyController,
-            placeholderItemCount: 10,
-            shimmerEffect: true,
-            placeholderItemModel: PropertyModel(),
+            shimmerItemCount: 10,
+            enableShimmer: true,
+            shimmerItemModel: PropertyModel(),
             itemBuilder: (context, item) {
               return PropertyCardWidget(data: item);
             },

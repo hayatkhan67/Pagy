@@ -1,6 +1,10 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pagy/pagy.dart';
 
+import 'interceptor.dart';
 import 'views/nav_screen.dart';
 
 void main() {
@@ -22,6 +26,12 @@ void main() {
     // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
     // 👉 Use `body` if it's sent inside the request body
     paginationMode: PaginationPayloadMode.queryParams,
+    interceptor: DioInterceptor(
+      onTokenBlacklisted: () {
+        // Handle token blacklisted scenario
+        log('Token is blacklisted');
+      },
+    ),
     errorBuilder: (errorMessage, onRetry) {
       return Center(
         child: Column(
@@ -59,7 +69,7 @@ void main() {
     scrollOffset: 200,
   );
 
-  runApp(const PagyExampleApp());
+  runApp(const ProviderScope(child: PagyExampleApp()));
 }
 
 class PagyExampleApp extends StatelessWidget {
