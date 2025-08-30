@@ -1,16 +1,33 @@
 import 'dart:developer';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pagy/pagy.dart';
+
 import '../../models/anime_model.dart';
 import 'anime_state.dart';
 
+/// `AnimeController`
+///
+/// A Riverpod `StateNotifier` responsible for managing paginated
+/// anime data using [PagyController].
+///
+/// It handles:
+/// - API data fetching (via `PagyController`)
+/// - List mutations (add, update, replace, reset)
+/// - Pagination (load more / refresh)
 class AnimeController extends StateNotifier<AnimeState> {
+  /// Initializes the controller with initial Pagy state
+  /// and automatically loads the first page of data.
   AnimeController() : super(_initialState()) {
-    // Auto load first page
     state.pagyController.loadData();
   }
 
-  /// Build initial state with Pagy setup
+  /// Builds the initial state with a configured [PagyController].
+  ///
+  /// - `endPoint`: API endpoint ("anime").
+  /// - `fromMap`: Factory to convert API JSON → [AnimeModel].
+  /// - `limit`: Number of items per page.
+  /// - `responseMapper`: Maps raw API response to [PagyResponseParser].
+  /// - `paginationMode`: Uses query params (e.g. `?page=1&limit=5`).
   static AnimeState _initialState() {
     final pagy = PagyController<AnimeModel>(
       endPoint: "anime",
@@ -28,63 +45,51 @@ class AnimeController extends StateNotifier<AnimeState> {
     return AnimeState(pagyController: pagy);
   }
 
-  /// 🔹 Select anime for details
-  void selectAnime(AnimeModel anime) {
-    state = state.copyWith(selectedAnime: anime);
-  }
-
-  /// 🔹 Update anime title at a specific index
+  /// Updates the title of an [AnimeModel] at a given [index].
+  ///
+  /// - Creates a copy with the new title.
+  /// - Updates `updatedAt` timestamp.
   void updateAnimeTitle(int index, String newTitle) {
-    modifyPagy((pagyState) {
-      if (index < 0 || index >= pagyState.data.length) return pagyState;
-
-      final oldAnime = pagyState.data[index];
-      final updatedAnime = oldAnime.copyWith(
-        title: newTitle,
-        updatedAt: DateTime.now(),
-      );
-
-      final updatedList = [...pagyState.data];
-      updatedList[index] = updatedAnime;
-
-      return pagyState.copyWith(data: updatedList);
-    });
+    final oldAnime = state.pagyController.items[index];
+    final updatedAnime = oldAnime.copyWith(
+      title: newTitle,
+      updatedAt: DateTime.now(),
+    );
+    state.pagyController.updateItemAt(index, updatedAnime);
   }
 
-  /// 🔹 Add a new Anime locally
+  /// Inserts a new [AnimeModel] at the given [index].
   void addAnimeAt(int index, AnimeModel anime) {
-    modifyPagy((pagyState) {
-      final list = [...pagyState.data];
-      if (index < 0 || index > list.length) {
-        list.add(anime);
-      } else {
-        list.insert(index, anime);
-      }
-      return pagyState.copyWith(data: list);
-    });
+    state.pagyController.insertAt(index, anime);
   }
 
-  /// 🔹 Reload current page
+  /// Adds a new [AnimeModel] at the start of the list.
+  void addAnimeFirst(AnimeModel anime) {
+    state.pagyController.addItem(anime, atStart: true);
+  }
+
+  /// Replaces an anime entry that matches the given [id]
+  /// with [newAnime].
+  void replaceAnime(String id, AnimeModel newAnime) {
+    state.pagyController.replaceWhere((anime) => anime.id == id, newAnime);
+  }
+
+  /// Reloads the first page of data.
   void reload() {
     state.pagyController.loadData();
   }
 
-  /// 🔹 Clear search
-  void clearSearch() {
-    state = state.copyWith(searchQuery: '');
-    reload();
+  /// Clears the list and resets pagination state.
+  void resetList() {
+    state.pagyController.reset();
   }
 
-  /// 🔹 Load next page
+  /// Loads the next page of data (pagination).
   void loadNextPage() {
     state.pagyController.loadData(refresh: false);
   }
 
-  /// 🔹 Direct advanced modification (for full control)
-  void modifyPagy(ValueUpdater<PagyState<AnimeModel>> updater) {
-    state.pagyController.modifyDirect(updater);
-  }
-
+  /// Properly disposes [PagyController] when no longer needed.
   @override
   void dispose() {
     state.pagyController.dispose();
@@ -92,7 +97,10 @@ class AnimeController extends StateNotifier<AnimeState> {
   }
 }
 
-/// Riverpod provider
+/// Riverpod provider for [AnimeController].
+///
+/// Use `ref.watch(animeProvider)` in UI to access [AnimeState].
+/// Use `ref.read(animeProvider.notifier)` to call controller methods.
 final animeProvider = StateNotifierProvider<AnimeController, AnimeState>((ref) {
   return AnimeController();
 });

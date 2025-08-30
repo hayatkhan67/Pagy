@@ -1,6 +1,4 @@
-import 'package:pagy/pagy.dart';
-
-import '../../features/pagination/data/datasources/pagy_remote_datasource.dart';
+import '../../../internal_imports.dart';
 import 'service_locator.dart';
 
 final locator = SimpleServiceLocator();

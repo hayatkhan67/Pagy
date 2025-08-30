@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../../pagy.dart';
+
+import '../controllers/pagy_controller.dart';
 import 'common/pagy_builder.dart';
 import 'common/pagy_shimmer.dart';
 

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'anime_screen.dart';
 import 'anime_screen_with_state.dart';
 import 'check_interceptor.dart';
 import 'home_screen.dart';
@@ -18,7 +17,9 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pagy Example')),
+      appBar: _currentIndex == 1
+          ? null
+          : AppBar(title: const Text('Pagy Example')),
 
       body: IndexedStack(
         index: _currentIndex,

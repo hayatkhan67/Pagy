@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 
+import '../../../../../internal_imports.dart';
 import '../../../../core/services/dependency_injections.dart';
-import '../../../../core/utils/pagy_utils.dart';
+import '../../../../core/config/pagy_config.dart';
 import '../../param/pagy_params.dart';
-import '../../../../../pagy.dart';
 
 part 'pagy_controller_loader.dart';
 part 'pagy_controller_helpers.dart';

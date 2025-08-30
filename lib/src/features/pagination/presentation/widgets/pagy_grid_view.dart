@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
+
+import '../controllers/pagy_controller.dart';
 import 'common/pagy_builder.dart';
 import 'common/pagy_shimmer.dart';
-import '../../../../../pagy.dart';
 
 class PagyGridView<T> extends StatelessWidget {
   final PagyController<T>? controller;
