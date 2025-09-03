@@ -112,6 +112,12 @@ class NetworkApiService {
 
   /// Converts DioException to app-specific exception
   dynamic _handleApiError(DioException e) {
+    // Special case: no host specified (baseUrl missing or invalid)
+    if (e.error is ArgumentError &&
+        e.error.toString().contains('No host specified')) {
+      throw '⚠️ API not configured properly. Please set a valid baseUrl.';
+    }
+
     throw ApiException.getException(e);
   }
 }

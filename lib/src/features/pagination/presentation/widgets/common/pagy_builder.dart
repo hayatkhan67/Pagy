@@ -3,6 +3,10 @@ import 'package:skeletonizer/skeletonizer.dart';
 import '../../../../../../pagy.dart';
 import '../../../../../core/utils/pagy_helpers.dart';
 
+/// Signature for layout builder callback used in [PagyBuilder].
+///
+/// Provides the current [PagyState], total [itemCount], and an
+/// [itemBuilder] function that can be passed to list/grid builders.
 typedef LayoutBuilderCallback<T> = Widget Function(
   BuildContext context,
   PagyState<T> state,
@@ -10,35 +14,87 @@ typedef LayoutBuilderCallback<T> = Widget Function(
   Widget Function(BuildContext, int) itemBuilder,
 );
 
+/// Signature for building a shimmer widget.
+/// Used when shimmer placeholders are enabled.
 typedef ShimmerBuilder = Widget Function(BuildContext context);
 
+/// Core widget that powers [PagyBaseView], [PagyListView], and [PagyGridView].
+///
+/// This builder is responsible for:
+/// - Listening to [PagyController] state changes
+/// - Rendering shimmer placeholders during loading
+/// - Handling full-screen error & empty states
+/// - Rendering inline error/loader during pagination
+/// - Integrating pull-to-refresh and infinite scroll
 class PagyBuilder<T> extends StatelessWidget {
+  /// Pagination controller that manages API calls and state.
   final PagyController<T>? controller;
+
+  /// Function that builds the layout (List/Grid etc.).
   final LayoutBuilderCallback<T> layoutBuilder;
+
+  /// Builder for individual list/grid items.
   final Widget Function(BuildContext, T item) itemBuilder;
+
+  /// Optional shimmer builder for custom shimmer layouts.
   final ShimmerBuilder? shimmerBuilder;
 
+  /// Whether shimmer placeholders should be shown while loading.
   final bool shimmerEffect;
+
+  /// Marks whether this builder is used inside a GridView.
   final bool isGridView;
+
+  /// Number of columns in GridView (ignored for ListView).
   final int crossAxisCount;
+
+  /// Horizontal spacing between grid items.
   final double crossAxisSpacing;
+
+  /// Vertical spacing between grid items.
   final double mainAxisSpacing;
+
+  /// Gap between list items.
   final double itemsGap;
+
+  /// Number of shimmer items to show when loading.
   final int placeholderItemCount;
+
+  /// Placeholder model for shimmer item rendering.
   final T? placeholderItemModel;
+
+  /// Optional separator builder for ListView.
   final IndexedWidgetBuilder? separatorBuilder;
 
+  /// Custom loader widget for pagination.
   final Widget? customLoader;
+
+  /// Limit number of visible items (useful for previews).
   final int? itemShowLimit;
+
+  /// Whether the list/grid should shrink-wrap its content.
   final bool shrinkWrap;
+
+  /// Whether to completely disable scrolling.
   final bool disableScrolling;
+
+  /// Custom scroll physics for list/grid.
   final ScrollPhysics? scrollPhysics;
+
+  /// Padding applied to the list/grid.
   final EdgeInsetsGeometry? padding;
 
+  /// Custom error widget builder for displaying errors.
   final Widget Function(String errorMessage, VoidCallback onRetry)?
       errorBuilder;
+
+  /// Custom empty state widget builder with retry support.
   final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
 
+  /// Creates a [PagyBuilder].
+  ///
+  /// Use this widget indirectly via [PagyListView] or [PagyGridView],
+  /// unless you need advanced customization.
   const PagyBuilder({
     super.key,
     required this.controller,
@@ -73,14 +129,14 @@ class PagyBuilder<T> extends StatelessWidget {
     return ValueListenableBuilder<PagyState<T>>(
       valueListenable: controller!.controller,
       builder: (context, state, _) {
-        // 1️⃣ Initial shimmer load
+        // 1️⃣ Initial shimmer or loader
         if (state.isFetching) {
           return shimmerEffect && shimmerBuilder != null
               ? shimmerBuilder!(context)
               : _loader();
         }
 
-        // 2️⃣ Full error screen (no data)
+        // 2️⃣ Full-screen error state (when no data available)
         if (_hasError(state) && state.data.isEmpty) {
           return _buildFullError(state.errorMessage!);
         }
@@ -90,7 +146,7 @@ class PagyBuilder<T> extends StatelessWidget {
           return _buildEmpty();
         }
 
-        // 4️⃣ Normal list with optional footer
+        // 4️⃣ Normal list with optional inline error/footer
         final hasInlineError = _hasError(state) && state.data.isNotEmpty;
         final baseCount = calculatePagyItemCount(state, itemShowLimit);
         final totalCount = baseCount + (hasInlineError ? 1 : 0);
@@ -119,7 +175,13 @@ class PagyBuilder<T> extends StatelessWidget {
     );
   }
 
-  /// Build each item including shimmer or error footer
+  /// Builds an individual item in the list/grid.
+  ///
+  /// Handles:
+  /// - Normal item rendering
+  /// - Inline error footer
+  /// - Inline shimmer footer
+  /// - Inline loader
   Widget _buildItem(BuildContext context, int index, PagyState<T> state) {
     if (index < state.data.length) {
       return itemBuilder(context, state.data[index]);
@@ -144,23 +206,23 @@ class PagyBuilder<T> extends StatelessWidget {
       );
     }
 
-    // 🔹 Inline shimmer footer (loading more)
+    // 🔹 Inline shimmer footer (when fetching more)
     if (state.isMoreFetching && shimmerEffect) {
       return _buildShimmerItem(context);
     }
 
-    // 🔹 Inline loader
+    // 🔹 Inline loader fallback
     return Padding(
       padding: const EdgeInsets.all(16),
       child: _loader(),
     );
   }
 
-  /// Loader widget (configurable)
+  /// Loader widget (custom or global).
   Widget _loader() =>
       customLoader ?? PagyConfig().globalLoader ?? const DefaultPagyLoader();
 
-  /// Full-screen error widget
+  /// Builds a full-screen error state widget.
   Widget _buildFullError(String message) =>
       errorBuilder?.call(message, () => controller!.loadData()) ??
       PagyConfig().globalErrorBuilder?.call(
@@ -172,7 +234,7 @@ class PagyBuilder<T> extends StatelessWidget {
         onRetry: () => controller!.loadData(),
       );
 
-  /// Empty state widget
+  /// Builds a full-screen empty state widget.
   Widget _buildEmpty() =>
       emptyStateRetryBuilder?.call(
         () => controller!.loadData(),
@@ -182,9 +244,11 @@ class PagyBuilder<T> extends StatelessWidget {
           ) ??
       DefaultEmptyWidget(onRetry: () => controller!.loadData());
 
+  /// Returns true if the given [state] has an error message.
   bool _hasError(PagyState<T> state) =>
       (state.errorMessage?.isNotEmpty ?? false);
 
+  /// Builds a shimmer placeholder for inline loading.
   Widget _buildShimmerItem(BuildContext context) {
     return Skeletonizer(
       enabled: true,

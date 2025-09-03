@@ -2,28 +2,31 @@ import 'package:dio/dio.dart';
 
 class ApiException {
   static String getException(DioException exception) {
-    // Show backend error if available
+    // Prefer server message if available
     final serverMessage = exception.response?.data;
     if (serverMessage is Map<String, dynamic> &&
         serverMessage['message'] != null) {
       return serverMessage['message'];
-    } else if (serverMessage is String) {
+    } else if (serverMessage is String && serverMessage.isNotEmpty) {
       return serverMessage;
     }
 
     switch (exception.type) {
       case DioExceptionType.connectionError:
-        return '📡 Network Error: Please check your internet connection';
+        return '📡 Network Error: Please check your internet connection.';
       case DioExceptionType.receiveTimeout:
-        return '⏳ Request Timeout: Server took too long to respond';
+        return '⏳ Request Timeout: The server took too long to respond.';
       case DioExceptionType.connectionTimeout:
-        return '🔌 Connection Timeout: Unable to connect to server';
+        return '🔌 Connection Timeout: Unable to connect to the server.';
       case DioExceptionType.badResponse:
-        return '❗ Server Error: Received invalid response';
+        return '❗ Server Error: Invalid or unexpected response.';
       case DioExceptionType.cancel:
-        return '❌ Request Cancelled';
+        return '❌ Request Cancelled.';
       default:
-        return '⚠️ Something went wrong. Please try again.';
+        // fallback for unknown or null types
+        return (exception.message?.isNotEmpty ?? false)
+            ? '⚠️ ${exception.message}'
+            : '⚠️ Something went wrong. Please try again.';
     }
   }
 }

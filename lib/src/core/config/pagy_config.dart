@@ -9,6 +9,8 @@ class PagyConfig {
   factory PagyConfig() => _instance;
   PagyConfig._internal();
 
+  bool _initialized = false;
+
   String baseUrl = '';
   BaseOptions? baseOptions;
   String pageKey = 'page';
@@ -18,7 +20,6 @@ class PagyConfig {
   PaginationPayloadMode paginationMode = PaginationPayloadMode.queryParams;
   Interceptor? dioInterceptor;
 
-  /// Global widget overrides
   Widget Function(String errorMessage, VoidCallback onRetry)?
       globalErrorBuilder;
   Widget Function(VoidCallback onRetry)? globalEmptyBuilder;
@@ -32,25 +33,20 @@ class PagyConfig {
     double scrollOffset = 200,
     bool apiLogs = true,
     PaginationPayloadMode paginationMode = PaginationPayloadMode.queryParams,
-
-    // Optional widget overrides
     Widget Function(String errorMessage, VoidCallback onRetry)? errorBuilder,
     Widget Function(VoidCallback onRetry)? emptyBuilder,
     Widget? loader,
-
-    // Custom Dio Interceptor
     Interceptor? interceptor,
   }) {
-    // Assert rule: only one of baseUrl or baseOptions can be used
+    if (_initialized) return; // avoid multiple hits
+
     assert(
       baseUrl == null || baseOptions == null,
-      'You cannot provide both baseUrl and baseOptions. Provide only one.',
+      'Provide only one: baseUrl or baseOptions.',
     );
-
-    // Also ensure at least one is provided
     assert(
       baseUrl != null || baseOptions != null,
-      'You must provide either baseUrl or baseOptions.',
+      'Either baseUrl or baseOptions must be provided.',
     );
 
     if (baseUrl != null) {
@@ -68,8 +64,21 @@ class PagyConfig {
     globalErrorBuilder = errorBuilder;
     globalEmptyBuilder = emptyBuilder;
     globalLoader = loader;
-
     dioInterceptor = interceptor;
-    setup();
+
+    _setupDependencies();
+    _initialized = true;
+  }
+
+  void ensureInitialized() {
+    if (!_initialized) {
+      debugPrint('[Pagy] Default config applied');
+      _setupDependencies();
+      _initialized = true;
+    }
+  }
+
+  void _setupDependencies() {
+    setup(); // service locator registrations
   }
 }
