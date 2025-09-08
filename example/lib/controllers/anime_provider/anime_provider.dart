@@ -18,23 +18,21 @@ class AnimeController extends StateNotifier<AnimeState> {
   /// Initializes the controller with initial Pagy state
   /// and automatically loads the first page of data.
   AnimeController() : super(_initialState()) {
+    // Start loading data
     state.pagyController.loadData();
+
+    // Sync anime list whenever PagyController updates
+    state.pagyController.listen((v) {
+      state = state.copyWith(animeList: List<AnimeModel>.from(v));
+    });
   }
 
-  /// Builds the initial state with a configured [PagyController].
-  ///
-  /// - `endPoint`: API endpoint ("anime").
-  /// - `fromMap`: Factory to convert API JSON → [AnimeModel].
-  /// - `limit`: Number of items per page.
-  /// - `responseMapper`: Maps raw API response to [PagyResponseParser].
-  /// - `paginationMode`: Uses query params (e.g. `?page=1&limit=5`).
   static AnimeState _initialState() {
     final pagy = PagyController<AnimeModel>(
       endPoint: "anime",
       fromMap: AnimeModel.fromJson,
       limit: 5,
       responseMapper: (response) {
-        log(response.runtimeType.toString(), name: 'Anime API');
         return PagyResponseParser(
           list: response['data'],
           totalPages: response['pagination']['totalPages'],
@@ -42,7 +40,8 @@ class AnimeController extends StateNotifier<AnimeState> {
       },
       paginationMode: PaginationPayloadMode.queryParams,
     );
-    return AnimeState(pagyController: pagy);
+
+    return AnimeState(pagyController: pagy, animeList: const []);
   }
 
   /// Updates the title of an [AnimeModel] at a given [index].

@@ -18,8 +18,9 @@ class AnimeScreenTest extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(animeProvider);
+
     final notifier = ref.read(animeProvider.notifier);
-    log('🔄 Full screen rebuild');
+    log('🔄 Full screen rebuild ${state.animeList.length}');
 
     return Scaffold(
       appBar: AppBar(

@@ -10,11 +10,15 @@ class AnimeState extends Equatable {
   final bool isFavoriteMode;
   final String searchQuery;
 
+  ///if you want to save the pagy data list in your state, you can use this
+  final List<AnimeModel> animeList;
+
   const AnimeState({
     required this.pagyController,
     this.selectedAnime,
     this.isFavoriteMode = false,
     this.searchQuery = "",
+    this.animeList = const [],
   });
 
   AnimeState copyWith({
@@ -22,12 +26,14 @@ class AnimeState extends Equatable {
     AnimeModel? selectedAnime,
     bool? isFavoriteMode,
     String? searchQuery,
+    List<AnimeModel>? animeList,
   }) {
     return AnimeState(
       pagyController: pagyController ?? this.pagyController,
       selectedAnime: selectedAnime ?? this.selectedAnime,
       isFavoriteMode: isFavoriteMode ?? this.isFavoriteMode,
       searchQuery: searchQuery ?? this.searchQuery,
+      animeList: animeList ?? this.animeList,
     );
   }
 
@@ -37,5 +43,6 @@ class AnimeState extends Equatable {
     selectedAnime,
     isFavoriteMode,
     searchQuery,
+    animeList,
   ];
 }

@@ -6,6 +6,20 @@ part of 'pagy_controller.dart';
 /// These utilities allow adding, updating, removing, or resetting items
 /// in the local cache while keeping [PagyState] in sync.
 extension PagyControllerHelpers<T> on PagyController<T> {
+  /// Attaches a listener that is called whenever the items list changes.
+  ///
+  /// Example:
+  /// ```dart
+  /// pagyController.listen((items) {
+  ///   print('Items updated: $items');
+  /// });
+  /// ```
+  void listen(void Function(List<T> items) onChanged) {
+    controller.addListener(() {
+      onChanged(List<T>.from(itemsList));
+    });
+  }
+
   /// Replaces the entire dataset with [newData].
   void updateData(List<T> newData) {
     itemsList
