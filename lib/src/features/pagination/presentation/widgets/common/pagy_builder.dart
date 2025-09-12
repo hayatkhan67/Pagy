@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:skeletonizer/skeletonizer.dart';
+import '../../../../../../internal_imports.dart';
 import '../../../../../../pagy.dart';
 import '../../../../../core/utils/pagy_helpers.dart';
 

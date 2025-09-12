@@ -26,6 +26,9 @@ void main() {
     // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
     // 👉 Use `body` if it's sent inside the request body
     paginationMode: PaginationPayloadMode.queryParams,
+    customLogger: (message, {name}) {
+      debugPrint('here test ${name ?? '[Pagy]'} $message');
+    },
     interceptor: DioInterceptor(
       onTokenBlacklisted: () {
         // Handle token blacklisted scenario

@@ -1,28 +1,39 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
+import '../controllers/pagy_controller.dart';
 import 'pagy_base_view.dart';
 
 /// {@template pagy_grid_view}
 /// A customizable [GridView]-like widget powered by [PagyController].
 ///
-/// `PagyGridView` automatically handles pagination states (loading, error,
-/// empty, data) while providing deep customization for UI and behavior.
+/// `PagyGridView` automatically manages pagination states:
+/// - **Loading** (with shimmer placeholders)
+/// - **Error** (with retry support)
+/// - **Empty** (with retry builder)
+/// - **Data** (grid of items)
 ///
 /// It builds a staggered-style grid using [MasonryGridView.builder],
-/// making it ideal for feed-like layouts such as product listings,
-/// social media grids, or photo galleries.
+/// making it ideal for:
+/// - Product listings
+/// - Social media feeds
+/// - Image/photo galleries
 ///
-/// ### Features:
-/// - Automatic pagination using [PagyController]
-/// - Shimmer placeholders for loading state
-/// - Error & empty state handling with retry support
-/// - Custom loader and error widgets
-/// - Grid configuration with flexible `crossAxisCount`, spacing, and padding
-/// - Scroll control with `shrinkWrap`, `disableScrolling`, and `scrollPhysics`
-/// - Optional item count limit for previews
+/// ### Features
+/// - Automatic pagination via [PagyController]
+/// - Shimmer placeholders for smooth loading
+/// - Built-in retry for empty/error states
+/// - Custom loader, error, and empty widgets
+/// - Flexible grid configuration:
+///   - `crossAxisCount` for column count
+///   - `crossAxisSpacing` & `mainAxisSpacing` for spacing
+/// - Scroll control:
+///   - `shrinkWrap`
+///   - `disableScrolling`
+///   - `scrollPhysics`
+/// - Limit items shown via `itemShowLimit` (useful for previews)
 ///
-/// ### Example:
+/// ### Example
 /// ```dart
 /// PagyGridView<Product>(
 ///   controller: pagyController,
@@ -38,17 +49,25 @@ import 'pagy_base_view.dart';
 /// {@endtemplate}
 class PagyGridView<T> extends PagyBaseView<T> {
   /// Number of columns in the grid.
+  ///
+  /// Defaults to `2`.
   final int crossAxisCount;
 
-  /// Spacing between items on the cross axis (horizontal).
+  /// Horizontal spacing between items.
+  ///
+  /// Defaults to `9.0`.
   final double crossAxisSpacing;
 
-  /// Spacing between items on the main axis (vertical).
+  /// Vertical spacing between items.
+  ///
+  /// Defaults to `10.0`.
   final double mainAxisSpacing;
 
-  /// Creates a new [PagyGridView] instance.
+  /// Creates a new [PagyGridView].
   ///
-  /// Requires a [PagyController] and an [itemBuilder].
+  /// Requires:
+  /// - a [PagyController] to manage pagination
+  /// - an [itemBuilder] to render each grid item
   const PagyGridView({
     super.key,
     required super.controller,

@@ -3,12 +3,13 @@ import 'package:flutter/material.dart';
 import '../controllers/pagy_controller.dart';
 import 'common/pagy_builder.dart';
 import 'common/pagy_shimmer.dart';
+import 'pagy_grid_view.dart';
+import 'pagy_list_view.dart';
 
 /// Base widget for Pagy-powered list/grid views.
 ///
 /// This widget provides the **common pagination boilerplate** used by
-/// [`PagyListView`] and [`PagyGridView`]. It handles:
-///
+/// [PagyListView] and [PagyGridView]. It handles:
 /// - Shimmer placeholders during loading
 /// - Error and empty states
 /// - Retry callbacks
@@ -87,8 +88,8 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Must be implemented by child classes to define how items are laid out.
   ///
   /// Examples:
-  /// - `ListView.builder` in [`PagyListView`]
-  /// - `GridView.builder` in [`PagyGridView`]
+  /// - `ListView.builder` in [PagyListView]
+  /// - `GridView.builder` in [PagyGridView]
   Widget buildLayout(
     BuildContext context,
     int itemCount,
