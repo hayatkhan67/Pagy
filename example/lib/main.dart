@@ -19,7 +19,7 @@ void main() {
     // 👉 For example: "limit", "perPage", "pageSize", etc.
     limitKey: 'limit',
 
-    // 🐞 Show API logs in the console when debugging (optional)
+    // 🐞 Show API logs in the console when debugging using Log Interceptor (optional)
     apiLogs: true,
 
     // 🔀 How your API expects pagination data to be sent
@@ -35,38 +35,6 @@ void main() {
         log('Token is blacklisted');
       },
     ),
-    errorBuilder: (errorMessage, onRetry) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              errorMessage,
-              style: TextStyle(fontSize: 18, color: Colors.red[600]),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      );
-    },
-    emptyBuilder: (onRetry) {
-      return Center(
-        child: Column(
-          children: [
-            Text(
-              'No data Test available',
-              style: TextStyle(fontSize: 18, color: Colors.grey[600]),
-            ),
-
-            const SizedBox(height: 12),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
-      );
-    },
-
-    loader: const Center(child: CircularProgressIndicator(color: Colors.amber)),
 
     // 🔁 How far from the bottom before fetching more (in pixels)
     scrollOffset: 200,
@@ -83,6 +51,7 @@ class PagyExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pagy Example',
       debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),
