@@ -12,11 +12,20 @@
 
 ---
 
-# Pagy - A Flutter Package for Pagination
+# 🚀 Pagy - A Flutter Package for Pagination
 
-**Pagy** is a Flutter package designed for smooth, efficient, and customizable pagination in your apps. It allows you to load data in chunks and display it seamlessly while handling API responses, pagination strategies, and UI components like shimmer effects.
+**Pagy** is a **plug-and-play pagination solution** for Flutter apps. It handles:
 
-<!-- <img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Example Project" /> -->
+- API pagination (query params, body payloads, headers).
+- Auto-cancel of duplicate API calls.
+- Global styles (placeholders, shimmer, spacing).
+- API interceptors (for auth tokens, retries, etc.).
+- Logging and monitoring.
+- Easy integration with **Bloc**, **Riverpod**, or direct controllers.
+- Works with both **light and dark themes** automatically.
+- Clean Architecture friendly – can be injected into repositories/services.
+
+---
 
 ## Usage
 
@@ -32,7 +41,7 @@ import 'views/nav_screen.dart';
 
 void main() {
   PagyConfig().initialize(
-    baseUrl: "https://pug-elegant-jennet.ngrok-free.app/",
+    baseUrl: "Your API Base URL",
     pageKey: 'page',
     limitKey: 'limit',
   );
@@ -60,46 +69,63 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  final PagyController<PropertyModel> pagyController = PagyController(
-    endPoint: "api/properties",
-    fromMap: PropertyModel.fromJson,
-    limit: 3,
-    responseMapper: (response) {
-      return PagyResponseParser(
-        list: response['data'],
-        totalPages: response['pagination']['totalPages'],
-      );
-    },
-    paginationMode: PaginationPayloadMode.queryParams,
-  );
+  late PagyController<PropertyModel> pagyController;
 
   @override
   void initState() {
     super.initState();
+    pagyController = PagyController(
+      endPoint: "properties",
+      requestType: PagyApiRequestType.post,
+      fromMap: PropertyModel.fromJson,
+      limit: 4,
+      responseMapper: (response) {
+        return PagyResponseParser(
+          list: response['data'],
+          totalPages: response['pagination']['totalPages'],
+        );
+      },
+      paginationMode: PaginationPayloadMode.queryParams,
+    );
+
     pagyController.loadData();
   }
 
   @override
-  void dispose() {
-    pagyController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: PagyListView<PropertyModel>(
-        itemsGap: 3,
-        padding: const EdgeInsets.symmetric(horizontal: 14),
-        controller: pagyController,
-        placeholderItemCount: 3,
-        shimmerEffect: true,
-        placeholderItemModel: PropertyModel(),
-        itemBuilder: (context, item) {
-          return PropertyCardWidget(data: item);
-        },
-      ),
+    return Column(
+      children: [
+        const SizedBox(height: 10),
+        CategoriesNameRow(
+          itemList: types,
+          onChanged: (value) {
+            log(name: 'selected tag', value.toString());
+            if (value.toLowerCase() == 'all') {
+              pagyController.loadData();
+              return;
+            } else {
+              pagyController.loadData(queryParameter: {'type': value});
+            }
+          },
+        ),
+        const SizedBox(height: 10),
+        Expanded(
+          child: PagyListView<PropertyModel>(
+            itemSpacing: 3,
+            padding: const EdgeInsets.symmetric(horizontal: 14),
+            separatorBuilder: (context, index) => const Divider(),
+            controller: pagyController,
+            placeholderItemCount: 10,
+            shimmerEffect: true,
+            placeholderItemModel: PropertyModel(),
+            itemBuilder: (context, item) {
+              return PropertyCardWidget(data: item);
+            },
+          ),
+        ),
+      ],
     );
   }
 }
+
 ```

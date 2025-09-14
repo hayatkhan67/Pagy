@@ -13,32 +13,47 @@ Set your base configuration **once** in the main function:
 ```dart
 import 'package:pagy/pagy.dart';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pagy/pagy.dart';
+
+import 'interceptor.dart';
+import 'views/nav_screen.dart';
+
 void main() {
   PagyConfig().initialize(
     // 🌐 Your base API URL
     baseUrl: "https://your-api.com/",
 
-    // 📩 The key your API uses to receive the current page number
-    // 👉 For example: "page", "currentPage", "p", etc.
+    // 📩 The key your API uses for current page
     pageKey: 'page',
 
-    // 📩 The key your API uses to receive the number of items per page
-    // 👉 For example: "limit", "perPage", "pageSize", etc.
+    // 📩 The key your API uses for page size
     limitKey: 'limit',
 
-    // 🐞 Show API logs in the console when debugging (optional)
+    // 🐞 Show API logs in console
     apiLogs: true,
 
-    // 🔀 How your API expects pagination data to be sent
-    // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
-    // 👉 Use `payload` if it's sent inside the request raw body (e.g. {"page": 1})
+    // 🔀 How pagination payload is sent
     paginationMode: PaginationPayloadMode.queryParams,
 
-    // 🔁 How far from the bottom before fetching more (in pixels)
+    // 🔁 Pixels from bottom before loading next page
     scrollOffset: 200,
+
+    // 🛠️ Optional custom logger
+    customLogger: (message, {name}) {
+      debugPrint('${name ?? '[Pagy]'} $message');
+    },
+
+    // 🔐 Optional interceptor for auth/error handling
+    interceptor: DioInterceptor(
+      onTokenBlacklisted: () {
+        // Example: logout or refresh token
+      },
+    ),
   );
 
-  runApp(const PagyExampleApp());
+  runApp(const ProviderScope(child: PagyExampleApp()));
 }
 
 ```
@@ -62,79 +77,55 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // Replace `PropertyModel` with your own data model
-  PagyController<PropertyModel> pagyController = PagyController(
-    // 📍 API endpoint
-    // 👉 If you already set baseUrl in PagyConfig, just provide the relative path (e.g. "api/properties")
-    // 👉 If you did NOT set baseUrl in PagyConfig, provide the full URL (e.g. "https://example.com/api/properties")
-    endPoint: "api/properties",
-
-    // 🧱 Function to parse each item in the list into your data model
-    fromMap: PropertyModel.fromJson,
-
-    // 🔢 Number of items to load per page
-    limit: 4,
-
-    // 📦 This parses the full API response and extracts the list + total pages
-    responseMapper: (response) {
-      return PagyResponseParser(
-        // 📄 The list of data items (from your API)
-        list: response['data'],
-
-        // 📊 Total number of pages (used for pagination logic)
-        totalPages: response['pagination']['totalPages'],
-      );
-    },
-
-    // 🔀 If not set globally in PagyConfig, define how pagination data is sent
-    paginationMode: PaginationPayloadMode.queryParams,
-
-    // 🧩 Send extra data along with your API request (optional)
-    additionalQueryParams: {'type': 'all'},
-
-    // 🔐 If your API requires authentication, you can pass the token here (optional)
-    token: 'your_api_token',
-  );
+  late PagyController<PropertyModel> pagyController;
 
   @override
   void initState() {
     super.initState();
+    pagyController = PagyController(
+      // 📍 Endpoint (relative if baseUrl is in PagyConfig)
+      endPoint: "properties",
 
-    // 🚀 This is the key line that starts the Pagy engine!
-    // It triggers the first API call and loads the initial data.
+      // 🧱 Convert API map → model
+      fromMap: PropertyModel.fromJson,
+
+      // 🔢 Items per page
+      limit: 4,
+
+      // 📦 Parse API response
+      responseMapper: (response) {
+        return PagyResponseParser(
+          list: response['data'],
+          totalPages: response['pagination']['totalPages'],
+        );
+      },
+
+      // 🔀 Optional override if not in PagyConfig
+      paginationMode: PaginationPayloadMode.queryParams,
+    );
+
+    // 🚀 Load first page
     pagyController.loadData();
   }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: PagyListView<PropertyModel>(
-      // 📏 Space between list items
-      itemsGap: 3,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        itemSpacing: 3,
+        controller: pagyController,
 
-      // 🧱 Outer padding of the list
-      padding: const EdgeInsets.symmetric(horizontal: 14),
+        // ✨ Shimmer while loading
+        shimmerEffect: true,
+        placeholderItemCount: 2,
+        placeholderItemModel: PropertyModel(),
 
-      // 🎮 Your PagyController that manages pagination logic
-      controller: pagyController,
-
-      // 🪄 Number of shimmer placeholders to show while loading
-      placeholderItemCount: 2,
-
-      // ✨ Enable shimmer loading effect (optional, default: false)
-      shimmerEffect: true,
-
-      // 📦 Placeholder item to use with shimmer (required if shimmerEffect is true)
-      placeholderItemModel: PropertyModel(),
-
-      // 🧩 Your widget for each list item
-      itemBuilder: (context, item) {
-        // 🎯 'item' is your model from the API — use it to build your UI
-        // Return your custom UI widget
-        return PropertyCardWidget(data: item);
-      },
-    ),
+        // 🔨 Your item UI
+        itemBuilder: (context, item) {
+          return PropertyCardWidget(data: item);
+        },
+      ),
     );
   }
 }
@@ -152,7 +143,7 @@ import 'package:pagy/pagy.dart';
 
 import '../models/property_model.dart';
 import '../utils/constant_data.dart';
-import '../widgets/catergorie_name_row.dart';
+import '../widgets/categories_name_row.dart';
 import '../widgets/property_card_widget.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -169,7 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     pagyController = PagyController(
-      endPoint: "api/properties",
+      endPoint: "properties",
       fromMap: PropertyModel.fromJson,
       limit: 3,
       responseMapper: (response) {
@@ -178,9 +169,7 @@ class _HomeScreenState extends State<HomeScreen> {
           totalPages: response['pagination']['totalPages'],
         );
       },
-      paginationMode: PaginationPayloadMode.queryParams,
     );
-
     pagyController.loadData();
   }
 
@@ -189,10 +178,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Column(
       children: [
         const SizedBox(height: 10),
-        CatergorieNameRow(
+        CategoriesNameRow(
           itemList: types,
           onChanged: (value) {
-            log('Selected tag: $value');
+            log("Filter applied: $value");
             if (value.toLowerCase() == 'all') {
               pagyController.loadData();
             } else {
@@ -203,11 +192,11 @@ class _HomeScreenState extends State<HomeScreen> {
         const SizedBox(height: 10),
         Expanded(
           child: PagyListView<PropertyModel>(
-            itemsGap: 3,
             padding: const EdgeInsets.symmetric(horizontal: 14),
+            itemSpacing: 3,
             controller: pagyController,
-            placeholderItemCount: 10,
             shimmerEffect: true,
+            placeholderItemCount: 10,
             placeholderItemModel: PropertyModel(),
             itemBuilder: (context, item) {
               return PropertyCardWidget(data: item);
@@ -235,4 +224,59 @@ PagyGridView<AnimeModel>(
     return AnimeCardWidget(data: item);
   },
 );
+```
+
+## 🌱 Riverpod Example (Anime List)
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pagy/pagy.dart';
+
+import '../models/anime_model.dart';
+import '../widgets/anime_card_widget.dart';
+
+/// 🎮 Step 1: Create a Riverpod provider for PagyController
+final animeControllerProvider = Provider<PagyController<AnimeModel>>((ref) {
+  final controller = PagyController<AnimeModel>(
+    endPoint: "anime",
+    fromMap: AnimeModel.fromJson,
+    limit: 10,
+    responseMapper: (response) {
+      return PagyResponseParser(
+        list: response['data'],
+        totalPages: response['pagination']['totalPages'],
+      );
+    },
+  );
+
+  // 🚀 Load initial data
+  controller.loadData();
+
+  return controller;
+});
+
+/// 🎬 Step 2: Consume the provider in your UI
+class AnimeScreen extends ConsumerWidget {
+  const AnimeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final pagyController = ref.watch(animeControllerProvider);
+
+    return Scaffold(
+      appBar: AppBar(title: const Text("Anime List")),
+      body: PagyGridView<AnimeModel>(
+        controller: pagyController,
+        padding: const EdgeInsets.all(14),
+        shimmerEffect: true,
+        placeholderItemCount: 6,
+        placeholderItemModel: AnimeModel(),
+        itemBuilder: (context, item) {
+          return AnimeCardWidget(data: item);
+        },
+      ),
+    );
+  }
+}
 ```

@@ -86,7 +86,11 @@ class PagyGridView<T> extends PagyBaseView<T> {
     this.crossAxisCount = 2,
     this.crossAxisSpacing = 9,
     this.mainAxisSpacing = 10,
-  });
+  }) : assert(
+          placeholderItemModel != null || shimmerEffect == false,
+          'PagyGridView: shimmerEffect is true but placeholderItemModel is null. '
+          'Provide a placeholderItemModel when enabling shimmer placeholders.',
+        );
 
   @override
   Widget buildLayout(
