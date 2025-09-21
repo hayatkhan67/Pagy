@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-import 'anime_screen.dart';
+import 'anime_screen_with_state.dart';
+import 'check_interceptor.dart';
 import 'home_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -16,11 +17,17 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Pagy Example')),
+      appBar: _currentIndex == 1
+          ? null
+          : AppBar(title: const Text('Pagy Example')),
 
       body: IndexedStack(
         index: _currentIndex,
-        children: const [HomeScreen(), AnimeScreen()],
+        children: const [
+          HomeScreen(),
+          AnimeScreenTest(),
+          AnimeScreenWithInterceptor(),
+        ],
       ),
       //  _screens[_currentIndex],
       bottomNavigationBar: NavigationBar(
@@ -42,6 +49,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.movie_outlined),
             selectedIcon: Icon(Icons.movie),
             label: 'Anime',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.privacy_tip_outlined),
+            selectedIcon: Icon(Icons.privacy_tip),
+            label: 'Privacy',
           ),
         ],
       ),

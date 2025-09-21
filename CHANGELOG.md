@@ -1,10 +1,24 @@
+## 1.0.0
+
+- 🚀 Remapped the entire package to Clean Architecture for improved scalability and maintainability.
+- 📝 Added support for custom headers in API requests.
+- 🏗️ Introduced a separate builder option in `PagyListView` for more flexible UI rendering.
+- ⏹️ Implemented automatic cancellation of previous API calls when new requests are triggered.
+- 🔒 Added interceptor support for advanced request/response handling (e.g., token blacklist).
+- 🔗 `PagyController` now integrates seamlessly with both BLoC and Riverpod.
+- 🧩 Added dependency injection test hooks, removing strict reliance on global `PagyConfig`.
+- 📊 Enhanced logging system to allow monitoring and saving of request/response logs.
+- 🌗 Integrated automatic theme support to adapt to the user's app theme (light/dark).
+
 ## 0.0.4
 
-POST request support Added and enhance API interaction; update dependencies and improve .gitignore
+- Added POST request support and enhanced API interactions.
+- Improved `.gitignore`.
+- Updated dependencies.
 
 ## 0.0.3+1
 
-- Dio Compatible version set
+- Set Dio compatible version.
 
 ## 0.0.3
 
@@ -14,11 +28,10 @@ POST request support Added and enhance API interaction; update dependencies and 
 
 ## 0.0.2
 
-- logo fixed
-- improved example
+- Fixed logo.
+- Improved example.
 
 ## 0.0.1
 
-- First Release
-
-- Assets path added
+- Initial release.
+- Added assets path.

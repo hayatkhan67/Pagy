@@ -1,9 +1,20 @@
 library;
 
-export 'src/controller/pagination_controller.dart';
-export 'src/state/helping_model.dart';
-export 'src/models/response_parser_model.dart';
-export 'src/config/pagy_config.dart';
-export 'src/enum/pagy_enum.dart';
-export 'src/widgets/list_view_pagination_component.dart';
-export 'src/widgets/grid_view_pagination_component.dart';
+export 'src/core/config/pagy_config.dart';
+
+// 📁 Domain - Entities
+export 'src/features/pagination/domain/entities/pagy_response_parser.dart';
+export 'src/features/pagination/domain/entities/pagy_state.dart';
+
+// 📁 Domain - Enums
+export 'src/features/pagination/domain/enums/pagy_enum.dart';
+
+// 📁 Presentation - Controllers
+export 'src/features/pagination/presentation/controllers/pagy_controller.dart';
+
+// 📁 Presentation - Widgets - Common
+export 'src/features/pagination/presentation/widgets/common/observer.dart';
+
+// 📁 Presentation - Widgets
+export 'src/features/pagination/presentation/widgets/pagy_grid_view.dart';
+export 'src/features/pagination/presentation/widgets/pagy_list_view.dart';

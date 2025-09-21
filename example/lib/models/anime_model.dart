@@ -1,7 +1,3 @@
-// To parse this JSON data, do
-//
-//     final AnimeModel = AnimeModelFromJson(jsonString);
-
 class AnimeModel {
   final String? title;
   final String? image;
@@ -24,10 +20,12 @@ class AnimeModel {
     image: json["image"],
     id: json["_id"],
     type: json["type"],
-    createdAt:
-        json["createdAt"] == null ? null : DateTime.parse(json["createdAt"]),
-    updatedAt:
-        json["updatedAt"] == null ? null : DateTime.parse(json["updatedAt"]),
+    createdAt: json["createdAt"] == null
+        ? null
+        : DateTime.parse(json["createdAt"]),
+    updatedAt: json["updatedAt"] == null
+        ? null
+        : DateTime.parse(json["updatedAt"]),
   );
 
   Map<String, dynamic> toJson() => {
@@ -38,4 +36,22 @@ class AnimeModel {
     "createdAt": createdAt?.toIso8601String(),
     "updatedAt": updatedAt?.toIso8601String(),
   };
+
+  AnimeModel copyWith({
+    String? title,
+    String? image,
+    String? id,
+    String? type,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return AnimeModel(
+      title: title ?? this.title,
+      image: image ?? this.image,
+      id: id ?? this.id,
+      type: type ?? this.type,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 }

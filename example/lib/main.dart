@@ -1,13 +1,16 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:pagy/pagy.dart';
 
+import 'interceptor.dart';
 import 'views/nav_screen.dart';
 
 void main() {
   PagyConfig().initialize(
     // 🌐 Your base API URL
-    baseUrl: "https://your-api.com/",
-
+    baseUrl: "https://pagy-backend-ten.vercel.app/api/",
     // 📩 The key your API uses to receive the current page number
     // 👉 For example: "page", "currentPage", "p", etc.
     pageKey: 'page',
@@ -16,19 +19,28 @@ void main() {
     // 👉 For example: "limit", "perPage", "pageSize", etc.
     limitKey: 'limit',
 
-    // 🐞 Show API logs in the console when debugging (optional)
-    apiLogs: true,
+    // 🐞 Show API logs in the console when debugging using Log Interceptor (optional)
+    apiLogs: false,
 
     // 🔀 How your API expects pagination data to be sent
     // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
     // 👉 Use `body` if it's sent inside the request body
     paginationMode: PaginationPayloadMode.queryParams,
+    // customLogger: (message, {name}) {
+    //   debugPrint('here test ${name ?? '[Pagy]'} $message');
+    // },
+    interceptor: DioInterceptor(
+      onTokenBlacklisted: () {
+        // Handle token blacklisted scenario
+        log('Token is blacklisted');
+      },
+    ),
 
     // 🔁 How far from the bottom before fetching more (in pixels)
     scrollOffset: 200,
   );
 
-  runApp(const PagyExampleApp());
+  runApp(const ProviderScope(child: PagyExampleApp()));
 }
 
 class PagyExampleApp extends StatelessWidget {
@@ -39,6 +51,7 @@ class PagyExampleApp extends StatelessWidget {
     return MaterialApp(
       title: 'Pagy Example',
       debugShowCheckedModeBanner: false,
+      themeMode: ThemeMode.system,
       theme: ThemeData(
         useMaterial3: true,
         scaffoldBackgroundColor: const Color(0xFFF5F5F5),

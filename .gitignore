@@ -76,3 +76,5 @@ controller/observer.dart
 
 # flutter library
 /pubspec.lock
+/todo_list.todo
+/.vscode

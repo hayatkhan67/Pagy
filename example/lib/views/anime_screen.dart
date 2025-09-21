@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:pagy/pagy.dart';
 
@@ -13,10 +15,11 @@ class AnimeScreen extends StatefulWidget {
 
 class _AnimeScreenState extends State<AnimeScreen> {
   PagyController<AnimeModel> pagyController = PagyController(
-    endPoint: "api/anime",
+    endPoint: "anime",
     fromMap: AnimeModel.fromJson,
     limit: 5,
     responseMapper: (response) {
+      log(response.runtimeType.toString(), name: 'anime screen');
       return PagyResponseParser(
         list: response['data'],
         totalPages: response['pagination']['totalPages'],
