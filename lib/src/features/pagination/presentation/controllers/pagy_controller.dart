@@ -5,7 +5,6 @@ import 'package:pagy/internal_imports.dart';
 
 import '../../../../../pagy.dart';
 import '../../../../core/services/dependency_injections.dart';
-import '../../../../core/services/request_guard.dart';
 import '../../param/pagy_params.dart';
 
 part 'pagy_controller_loader.dart';
