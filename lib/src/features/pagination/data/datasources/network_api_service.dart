@@ -83,6 +83,10 @@ class NetworkApiService {
         );
       }
     } on DioException catch (e) {
+      // if (e.type == DioExceptionType.cancel) {
+      //   pagyLog("🛑 Request cancelled: ${e.message}", name: endPoint);
+      //   rethrow; // or just return Future.error if you want
+      // }
       pagyLog('${e.response}', name: endPoint);
       return _handleApiError(e);
     } catch (e) {

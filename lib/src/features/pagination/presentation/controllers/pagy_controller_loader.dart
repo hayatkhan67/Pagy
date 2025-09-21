@@ -1,47 +1,15 @@
 part of 'pagy_controller.dart';
 
-/// {@template pagy_controller_loader}
-/// Extension on [PagyController] that adds API loading and retry functionality.
-///
-/// Handles:
-/// - Refreshing data (reset to page `1`)
-/// - Loading additional pages (infinite scroll)
-/// - Request cancellation to prevent race conditions
-/// - Safe JSON parsing with error handling
-/// - Retry mechanism on failure
-///
-/// Used internally by `PagyListView` / `PagyGridView`, but can also be called
-/// manually for custom flows.
-/// {@endtemplate}
 extension PagyControllerLoader<T> on PagyController<T> {
-  /// Loads paginated data from the API.
-  ///
-  /// - When [refresh] is `true` (default), the list is cleared and starts
-  ///   again from page 1.
-  /// - When [refresh] is `false`, the next page of data is fetched and appended.
-  ///
-  /// Automatically updates [controller] state:
-  /// - `isFetching` while refreshing
-  /// - `isMoreFetching` while loading additional pages
-  /// - `errorMessage` on failure
-  ///
-  /// ### Parameters:
-  /// - [refresh]: Whether to refresh the list (default: `true`).
-  /// - [queryParameter]: Custom filters or query params.
-  /// - [paginationMode]: Override global [PaginationPayloadMode].
-  /// - [payloadData]: Extra payload for POST/PUT requests.
-  ///
-  /// ### Example:
-  /// ```dart
-  /// await controller.loadData(refresh: true);
-  /// await controller.loadData(refresh: false); // Load next page
-  /// ```
   Future<void> loadData({
     bool refresh = true,
     Map<String, dynamic>? queryParameter,
     PaginationPayloadMode? paginationMode,
     dynamic payloadData,
   }) async {
+    pagyLog(
+        "🚀 loadData called with refresh: $refresh, queryParameter: $queryParameter");
+
     // Store filter state
     if (queryParameter != null) {
       filter = queryParameter;
@@ -50,17 +18,31 @@ extension PagyControllerLoader<T> on PagyController<T> {
     }
 
     final state = controller.value;
-    if (state.isFetching || state.isMoreFetching) return;
 
-    // Cancel any ongoing request
-    cancelToken?.cancel("Cancelled due to new request");
-    cancelToken = CancelToken();
+    // REMOVED: The problematic early return that was preventing cancellation
+    // if (state.isFetching || state.isMoreFetching) return;
 
     // Determine next page
     final num currentPage = refresh ? 1 : state.currentPage + 1;
-    if (!refresh && currentPage > state.totalPages) return;
+    if (!refresh && currentPage > state.totalPages) {
+      pagyLog("📄 No more pages to load");
+      return;
+    }
 
-    // Update loading state
+    // Always cancel existing request first (MOVED BEFORE state check)
+    if (cancelToken != null) {
+      pagyLog("❌ Cancelling existing request");
+      cancelToken!.cancel("New request initiated");
+    } else {
+      pagyLog("✅ No existing request to cancel");
+    }
+
+    // Create new cancel token
+    final currentRequestToken = CancelToken();
+    cancelToken = currentRequestToken;
+    pagyLog("🔄 Created new cancel token: ${currentRequestToken.hashCode}");
+
+    // Update loading state (always update, even if we were already fetching)
     controller.value = state.copyWith(
       isFetching: refresh,
       isMoreFetching: !refresh,
@@ -81,14 +63,36 @@ extension PagyControllerLoader<T> on PagyController<T> {
         token: token,
         headers: headers,
         paginationMode: mode,
-        cancelToken: cancelToken,
+        cancelToken: currentRequestToken,
         queryParameter: queryParameter,
         fromMap: fromMap,
       );
 
+      pagyLog("🌐 Making API call with token: ${currentRequestToken.hashCode}");
+
       // Execute API call via DI use-case
       final Response response =
           await locator.get<GetPaginatedDataUseCase>().call(params);
+
+      pagyLog(
+          "✅ API call completed with token: ${currentRequestToken.hashCode}");
+
+      // Check if request was cancelled during execution
+      if (currentRequestToken.isCancelled) {
+        pagyLog(
+            "🛑 Token ${currentRequestToken.hashCode} was cancelled during execution");
+        return;
+      }
+
+      // Check if this is still the active request
+      if (cancelToken != currentRequestToken) {
+        pagyLog(
+            "🛑 Token ${currentRequestToken.hashCode} is no longer active, current: ${cancelToken?.hashCode}");
+        return;
+      }
+
+      pagyLog(
+          "🎯 Processing response for token: ${currentRequestToken.hashCode}");
 
       // Parse and map response
       if (responseMapper != null && response.data != null) {
@@ -103,55 +107,78 @@ extension PagyControllerLoader<T> on PagyController<T> {
             if (!kReleaseMode) {
               pagyLog("❌ Failed to parse item at index $i: ${parsed.list[i]}");
               pagyLog("Error: $e");
-              pagyLog("Stack: $stack");
             }
-            controller.value = state.copyWith(
-              isFetching: false,
-              isMoreFetching: false,
-              errorMessage:
-                  "⚠️ Parsing error on item $i. Please check your model or keys.",
-            );
+
+            // Only update state if this request is still active
+            if (cancelToken == currentRequestToken &&
+                !currentRequestToken.isCancelled) {
+              controller.value = state.copyWith(
+                isFetching: false,
+                isMoreFetching: false,
+                errorMessage:
+                    "⚠️ Parsing error on item $i. Please check your model or keys.",
+              );
+            }
             return;
           }
         }
 
-        // Replace or append items
-        if (refresh) itemsList.clear();
-        itemsList.addAll(newItems);
+        // Final check before updating state
+        if (cancelToken == currentRequestToken &&
+            !currentRequestToken.isCancelled) {
+          pagyLog(
+              "📝 Updating state with ${newItems.length} items for token: ${currentRequestToken.hashCode}");
 
-        // Update success state
-        controller.value = state.copyWith(
-          data: [...itemsList],
-          currentPage: currentPage,
-          totalPages: parsed.totalPages ?? 1,
-          isFetching: false,
-          isMoreFetching: false,
-          errorMessage: '',
-        );
+          // Replace or append items
+          if (refresh) itemsList.clear();
+          itemsList.addAll(newItems);
+
+          // Update success state
+          controller.value = state.copyWith(
+            data: [...itemsList],
+            currentPage: currentPage,
+            totalPages: parsed.totalPages ?? 1,
+            isFetching: false,
+            isMoreFetching: false,
+            errorMessage: '',
+          );
+        } else {
+          pagyLog(
+              "🛑 Skipping state update - token ${currentRequestToken.hashCode} is no longer active");
+        }
       } else {
         throw Exception("⚠️ Empty or invalid response from server.");
       }
     } catch (e, stackTrace) {
-      if (!kReleaseMode) {
-        pagyLog("🚫 Unexpected error: $e");
-        pagyLog("StackTrace: $stackTrace");
+      pagyLog("💥 Exception caught: $e");
+
+      // Handle cancellation
+      if (e is DioException && CancelToken.isCancel(e)) {
+        pagyLog(
+            "🛑 DioException - Request was cancelled: ${currentRequestToken.hashCode}");
+        return;
       }
-      controller.value = state.copyWith(
-        isFetching: false,
-        isMoreFetching: false,
-        errorMessage: e.toString(),
-      );
+
+      // Handle other errors - but only if request is still active
+      if (cancelToken == currentRequestToken &&
+          !currentRequestToken.isCancelled) {
+        pagyLog(
+            "🚫 Updating error state for token: ${currentRequestToken.hashCode}");
+        if (!kReleaseMode) {
+          pagyLog("🚫 Unexpected error: $e");
+        }
+        controller.value = state.copyWith(
+          isFetching: false,
+          isMoreFetching: false,
+          errorMessage: e.toString(),
+        );
+      } else {
+        pagyLog(
+            "🛑 Ignoring error for cancelled token: ${currentRequestToken.hashCode}");
+      }
     }
   }
 
-  /// Retries the last failed request if parameters exist.
-  ///
-  /// Restores [errorMessage] to `null` before retrying.
-  ///
-  /// ### Example:
-  /// ```dart
-  /// await controller.retry();
-  /// ```
   Future<void> retry() async {
     if (lastParams == null) return;
     controller.value = controller.value.copyWith(errorMessage: null);

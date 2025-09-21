@@ -20,15 +20,15 @@ void main() {
     limitKey: 'limit',
 
     // 🐞 Show API logs in the console when debugging using Log Interceptor (optional)
-    apiLogs: true,
+    apiLogs: false,
 
     // 🔀 How your API expects pagination data to be sent
     // 👉 Use `queryParams` if it's sent in the URL (e.g. ?page=1)
     // 👉 Use `body` if it's sent inside the request body
     paginationMode: PaginationPayloadMode.queryParams,
-    customLogger: (message, {name}) {
-      debugPrint('here test ${name ?? '[Pagy]'} $message');
-    },
+    // customLogger: (message, {name}) {
+    //   debugPrint('here test ${name ?? '[Pagy]'} $message');
+    // },
     interceptor: DioInterceptor(
       onTokenBlacklisted: () {
         // Handle token blacklisted scenario

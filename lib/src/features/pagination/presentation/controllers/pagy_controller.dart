@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:pagy/internal_imports.dart';
 
-import '../../../../../internal_imports.dart';
+import '../../../../../pagy.dart';
 import '../../../../core/services/dependency_injections.dart';
-import '../../../../core/config/pagy_config.dart';
+import '../../../../core/services/request_guard.dart';
 import '../../param/pagy_params.dart';
 
 part 'pagy_controller_loader.dart';
@@ -45,7 +46,7 @@ class PagyController<T> {
 
   /// Holds the API pagination state and notifies listeners on updates.
   ///
-  /// Used by [PagyBuilder], [PagyObserver], and other widgets to rebuild
+  /// Used by [PagyObserver], and other widgets to rebuild
   /// when data, loading, or error state changes.
   final ValueNotifier<PagyState<T>> controller;
 
