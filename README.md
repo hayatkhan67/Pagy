@@ -1,29 +1,43 @@
 <p align="center">
-	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Package Logo" />
+	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Pagy Logo" width="200"/>
 </p>
+
+<h1 align="center">Pagy</h1>
+
 <p align="center">
-	<i>Pagy - A simple Flutter package for smooth pagination</i>
+	<i>A powerful Flutter package for effortless API pagination with shimmer effects, error handling, and smooth scrolling</i>
 </p>
+
 <p align="center">
-	<a href="https://pub.dev/packages/pagy" rel="noopener" target="_blank"><img src="https://img.shields.io/pub/v/pagy.svg" alt="Pub.dev Badge"></a>
-	<a href="https://opensource.org/licenses/MIT" rel="noopener" target="_blank"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License Badge"></a>
-	<a href="https://github.com/hayatkhan67/pagy" rel="noopener" target="_blank"><img src="https://img.shields.io/badge/platform-flutter-ff69b4.svg" alt="Flutter Platform Badge"></a>
+	<a href="https://pub.dev/packages/pagy"><img src="https://img.shields.io/pub/v/pagy.svg?label=pub&color=blue" alt="Pub Version"></a>
+	<a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/license-MIT-purple.svg" alt="MIT License"></a>
+	<a href="https://github.com/hayatkhan67/pagy"><img src="https://img.shields.io/badge/platform-flutter-ff69b4.svg" alt="Flutter Platform"></a>
+	<a href="https://github.com/hayatkhan67/pagy/stargazers"><img src="https://img.shields.io/github/stars/hayatkhan67/pagy?style=social" alt="GitHub Stars"></a>
+</p>
+
+<p align="center">
+	<a href="https://github.com/hayatkhan67/pagy">GitHub</a> •
+	<a href="https://pub.dev/packages/pagy">pub.dev</a> •
+	<a href="https://github.com/hayatkhan67/pagy/issues">Report Bug</a> •
+	<a href="https://github.com/hayatkhan67/pagy/issues">Request Feature</a>
 </p>
 
 ---
 
-# 🚀 Pagy - A Flutter Package for Pagination
+## ✨ Features
 
-**Pagy** is a **plug-and-play pagination solution** for Flutter apps. It handles:
+**Pagy** is a **plug-and-play pagination solution** for Flutter apps that makes implementing paginated lists incredibly easy:
 
-- ✅ API pagination (query params, body payloads, headers)
-- 🚫 Auto-cancel of duplicate API calls
-- 🎨 Global styles (placeholders, shimmer, spacing)
-- 🔐 API interceptors (for auth tokens, retries, etc.)
-- 📊 Logging and monitoring
-- 🧩 Easy integration with **Bloc**, **Riverpod**, or direct controllers
-- 🌗 Works with both **light and dark themes** automatically
-- 🏗️ Clean Architecture friendly – can be injected into repositories/services
+- ✅ **Smart API Integration** - Query params, body payloads, and custom headers support
+- 🚫 **Auto-cancellation** - Duplicate API calls automatically cancelled
+- 🎨 **Beautiful UI** - Built-in shimmer effects, error states, and empty state handling  
+- 🔧 **Built-in Parsers** - Laravel, Django, and 5+ common API formats supported
+- 📊 **Advanced Metadata** - Progress tracking, page indicators, and load status
+- 🔐 **Interceptors** - Custom auth tokens, retries, and request modification
+- 🧩 **State Management** - Works with Bloc, Riverpod, Provider, or standalone
+- 🌗 **Theme Support** - Automatic light/dark theme adaptation
+- 🏗️ **Clean Architecture** - Dependency injection friendly
+- ⚡ **Performance** - Optimized scrolling with lazy loading
 
 ---
 
@@ -492,6 +506,12 @@ Check out the complete working example in the [`example`](./example) directory, 
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
 ---
 
 ## 📄 License
@@ -500,8 +520,36 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ---
 
-## 💬 Support
+## 👨‍💻 Author
 
-For questions or issues, please:
-- Open an issue on [GitHub](https://github.com/hayatkhan67/pagy/issues)
-- Check existing [discussions](https://github.com/hayatkhan67/pagy/discussions)
+<p align="center">
+  <img src="https://github.com/hayatkhan67.png" width="100" style="border-radius: 50%;" alt="Hayat Khan"/>
+</p>
+
+<h3 align="center">Hayat Khan</h3>
+
+<p align="center">
+  <i>Flutter Developer & Open Source Contributor</i>
+</p>
+
+<p align="center">
+  <a href="https://github.com/hayatkhan67">
+    <img src="https://img.shields.io/badge/GitHub-100000?style=for-the-badge&logo=github&logoColor=white" alt="GitHub"/>
+  </a>
+  <a href="https://www.linkedin.com/in/hayat-khan-263217281/">
+    <img src="https://img.shields.io/badge/LinkedIn-0077B5?style=for-the-badge&logo=linkedin&logoColor=white" alt="LinkedIn"/>
+  </a>
+  <a href="mailto:hayatkhan626225@gmail.com">
+    <img src="https://img.shields.io/badge/Email-D14836?style=for-the-badge&logo=gmail&logoColor=white" alt="Email"/>
+  </a>
+</p>
+
+---
+
+<p align="center">
+  <b>If you found this package helpful, please give it a ⭐ on <a href="https://github.com/hayatkhan67/pagy">GitHub</a>!</b>
+</p>
+
+<p align="center">
+  Made with ❤️ by <a href="https://github.com/hayatkhan67">Hayat Khan</a>
+</p>
