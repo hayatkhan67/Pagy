@@ -35,7 +35,7 @@ class PagyBuilder<T> extends StatelessWidget {
   final LayoutBuilderCallback<T> layoutBuilder;
 
   /// Builder for individual list/grid items.
-  final Widget Function(BuildContext, T item) itemBuilder;
+  final Widget Function(BuildContext, T item, int index) itemBuilder;
 
   /// Optional shimmer builder for custom shimmer layouts.
   final ShimmerBuilder? shimmerBuilder;
@@ -185,7 +185,7 @@ class PagyBuilder<T> extends StatelessWidget {
   /// - Inline loader
   Widget _buildItem(BuildContext context, int index, PagyState<T> state) {
     if (index < state.data.length) {
-      return itemBuilder(context, state.data[index]);
+      return itemBuilder(context, state.data[index], index);
     }
 
     // 🔹 Inline error footer
@@ -249,11 +249,10 @@ class PagyBuilder<T> extends StatelessWidget {
   bool _hasError(PagyState<T> state) =>
       (state.errorMessage?.isNotEmpty ?? false);
 
-  /// Builds a shimmer placeholder for inline loading.
   Widget _buildShimmerItem(BuildContext context) {
     return Skeletonizer(
       enabled: true,
-      child: itemBuilder(context, placeholderItemModel as T),
+      child: itemBuilder(context, placeholderItemModel as T, 0),
     );
   }
 }

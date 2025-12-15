@@ -2,7 +2,14 @@ library;
 
 export 'src/core/config/pagy_config.dart';
 
+// 📁 Core - Errors
+export 'src/core/errors/pagy_error.dart';
+
+// 📁 Core - Utils
+export 'src/core/utils/pagy_parsers.dart';
+
 // 📁 Domain - Entities
+export 'src/features/pagination/domain/entities/pagy_metadata.dart';
 export 'src/features/pagination/domain/entities/pagy_response_parser.dart';
 export 'src/features/pagination/domain/entities/pagy_state.dart';
 

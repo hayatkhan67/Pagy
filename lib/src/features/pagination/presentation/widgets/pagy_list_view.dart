@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/pagy_controller.dart';
-import 'common/pagy_shimmer.dart';
 import 'pagy_base_view.dart';
 
 /// {@template pagy_list_view}
@@ -110,39 +109,6 @@ class PagyListView<T> extends PagyBaseView<T> {
       padding: padding,
       itemCount: itemCount,
       itemBuilder: itemBuilderFn,
-    );
-  }
-
-  /// Builds the shimmer loading state.
-  ///
-  /// Uses [PagyShimmer] to render placeholder items while data is loading.
-  /// Respects the list layout (including separators and spacing).
-  ///
-  /// Example:
-  /// ```dart
-  /// PagyListView(
-  ///   controller: userController,
-  ///   shimmerEffect: true,
-  ///   placeholderItemModel: User.empty(),
-  ///   itemBuilder: (context, user) => UserTile(user: user),
-  /// )
-  /// ```
-  @override
-  Widget buildShimmer(BuildContext context) {
-    return PagyShimmer<T>(
-      count: placeholderItemCount,
-      itemBuilder: (c, _) => itemBuilder(c, placeholderItemModel as T),
-      layoutBuilder: (childBuilder) => ListView.separated(
-        separatorBuilder:
-            separatorBuilder ?? (_, __) => SizedBox(height: itemSpacing),
-        shrinkWrap: shrinkWrap,
-        physics: disableScrolling
-            ? const NeverScrollableScrollPhysics()
-            : scrollPhysics,
-        padding: padding,
-        itemCount: placeholderItemCount,
-        itemBuilder: childBuilder,
-      ),
     );
   }
 }
