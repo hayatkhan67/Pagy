@@ -37,9 +37,11 @@ import 'pagy_base_view.dart';
 /// ```dart
 /// PagyGridView<Product>(
 ///   controller: pagyController,
-///   itemBuilder: (context, index) {
-///     final product = pagyController.items[index];
-///     return ProductCard(product: product);
+///   itemBuilderWithIndex: (context, product, index) {
+///     return ProductCard(
+///       product: product,
+///       rank: index + 1,
+///     );
 ///   },
 ///   crossAxisCount: 2,
 ///   crossAxisSpacing: 8,
@@ -71,7 +73,10 @@ class PagyGridView<T> extends PagyBaseView<T> {
   const PagyGridView({
     super.key,
     required super.controller,
-    required super.itemBuilder,
+    @Deprecated(
+        'Use itemBuilderWithIndex instead for access to index. Will be removed in v2.0.0')
+    super.itemBuilder,
+    super.itemBuilderWithIndex,
     super.shimmerEffect,
     super.placeholderItemCount,
     super.placeholderItemModel,

@@ -30,9 +30,11 @@ import 'pagy_base_view.dart';
 /// ```dart
 /// PagyListView<User>(
 ///   controller: userController,
-///   itemBuilder: (context, index) {
-///     final user = userController.items[index];
-///     return UserTile(user: user);
+///   itemBuilderWithIndex: (context, user, index) {
+///     return ListTile(
+///       leading: CircleAvatar(child: Text('#${index + 1}')),
+///       title: Text(user.name),
+///     );
 ///   },
 ///   itemSpacing: 8,
 ///   shimmerEffect: true,
@@ -69,7 +71,10 @@ class PagyListView<T> extends PagyBaseView<T> {
   const PagyListView({
     super.key,
     required super.controller,
-    required super.itemBuilder,
+    @Deprecated(
+        'Use itemBuilderWithIndex instead for access to index. Will be removed in v2.0.0')
+    super.itemBuilder,
+    super.itemBuilderWithIndex,
     this.itemSpacing = 0,
     this.separatorBuilder,
     super.shimmerEffect = false,
