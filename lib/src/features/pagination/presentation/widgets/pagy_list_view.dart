@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../controllers/pagy_controller.dart';
-import 'common/pagy_shimmer.dart';
 import 'pagy_base_view.dart';
 
 /// {@template pagy_list_view}
@@ -26,18 +25,23 @@ import 'pagy_base_view.dart';
 /// - Optional max visible items (preview mode)
 /// - Scroll control with `shrinkWrap`, `disableScrolling`, and `scrollPhysics`
 /// - Fully customizable loaders, error, and empty state widgets
+/// - Pull-to-refresh on empty state via `enableRefreshOnEmpty`
 ///
 /// ### Example:
 /// ```dart
 /// PagyListView<User>(
 ///   controller: userController,
-///   itemBuilder: (context, index) {
-///     final user = userController.items[index];
-///     return UserTile(user: user);
+///   itemBuilderWithIndex: (context, user, index) {
+///     return ListTile(
+///       leading: CircleAvatar(child: Text('#${index + 1}')),
+///       title: Text(user.name),
+///     );
 ///   },
 ///   itemSpacing: 8,
 ///   shimmerEffect: true,
 ///   placeholderItemModel: User.empty(),
+///   emptyMessage: 'No users found',
+///   enableRefreshOnEmpty: true,
 /// )
 /// ```
 /// {@endtemplate}
@@ -65,12 +69,17 @@ class PagyListView<T> extends PagyBaseView<T> {
   ///
   /// - If [shimmerEffect] is enabled, you **must** provide a
   ///   [placeholderItemModel].
-  /// - Supports custom states via [errorBuilder], [emptyStateRetryBuilder],
+  /// - Supports custom states via [errorBuilder], [emptyStateBuilder],
   ///   and [customLoader].
+  /// - Use [emptyMessage] and [emptyIcon] to customize empty state.
+  /// - Set [enableRefreshOnEmpty] to allow pull-to-refresh when empty.
   const PagyListView({
     super.key,
     required super.controller,
-    required super.itemBuilder,
+    @Deprecated(
+        'Use itemBuilderWithIndex instead for access to index. Will be removed in v2.0.0')
+    super.itemBuilder,
+    super.itemBuilderWithIndex,
     this.itemSpacing = 0,
     this.separatorBuilder,
     super.shimmerEffect = false,
@@ -82,7 +91,12 @@ class PagyListView<T> extends PagyBaseView<T> {
     super.padding,
     super.itemShowLimit,
     super.errorBuilder,
-    super.emptyStateRetryBuilder,
+    @Deprecated('Use emptyStateBuilder instead') super.emptyStateRetryBuilder,
+    super.emptyStateBuilder,
+    super.emptyMessage,
+    super.emptyIcon,
+    super.showEmptyRetryButton,
+    super.enableRefreshOnEmpty,
     super.customLoader,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,
@@ -110,39 +124,6 @@ class PagyListView<T> extends PagyBaseView<T> {
       padding: padding,
       itemCount: itemCount,
       itemBuilder: itemBuilderFn,
-    );
-  }
-
-  /// Builds the shimmer loading state.
-  ///
-  /// Uses [PagyShimmer] to render placeholder items while data is loading.
-  /// Respects the list layout (including separators and spacing).
-  ///
-  /// Example:
-  /// ```dart
-  /// PagyListView(
-  ///   controller: userController,
-  ///   shimmerEffect: true,
-  ///   placeholderItemModel: User.empty(),
-  ///   itemBuilder: (context, user) => UserTile(user: user),
-  /// )
-  /// ```
-  @override
-  Widget buildShimmer(BuildContext context) {
-    return PagyShimmer<T>(
-      count: placeholderItemCount,
-      itemBuilder: (c, _) => itemBuilder(c, placeholderItemModel as T),
-      layoutBuilder: (childBuilder) => ListView.separated(
-        separatorBuilder:
-            separatorBuilder ?? (_, __) => SizedBox(height: itemSpacing),
-        shrinkWrap: shrinkWrap,
-        physics: disableScrolling
-            ? const NeverScrollableScrollPhysics()
-            : scrollPhysics,
-        padding: padding,
-        itemCount: placeholderItemCount,
-        itemBuilder: childBuilder,
-      ),
     );
   }
 }

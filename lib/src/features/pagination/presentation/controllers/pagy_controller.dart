@@ -67,8 +67,16 @@ class PagyController<T> {
 
   /// Extra query parameters appended to pagination params.
   ///
+  /// **Deprecated:** Use [query] instead for better clarity.
+  ///
   /// Example: `{ 'sort': 'latest', 'category': 'books' }`
+  @Deprecated('Use query instead. Will be removed in v2.0.0')
   final Map<String, dynamic>? additionalQueryParams;
+
+  /// Query parameters to append to API requests.
+  ///
+  /// Example: `{ 'sort': 'latest', 'category': 'books' }`
+  final Map<String, dynamic>? query;
 
   /// Number of items to fetch per page (default: `4`).
   final int limit;
@@ -80,14 +88,41 @@ class PagyController<T> {
 
   /// Function to parse API response into a [PagyResponseParser].
   ///
+  /// **Deprecated:** Use [responseParser] instead for better clarity.
+  ///
   /// Typically extracts `items` and `total` count from the raw API response.
+  @Deprecated('Use responseParser instead. Will be removed in v2.0.0')
   final PagyResponseParser Function(Map<String, dynamic> response)?
       responseMapper;
 
+  /// Function to parse API response into a [PagyResponseParser].
+  ///
+  /// Extracts the list of items and pagination metadata from API response.
+  ///
+  /// Example:
+  /// ```dart
+  /// responseParser: PagyParsers.dataWithPagination,
+  /// // or custom:
+  /// responseParser: (response) => PagyResponseParser(
+  ///   list: response['items'],
+  ///   totalPages: response['total_pages'],
+  /// ),
+  /// ```
+  final PagyResponseParser Function(Map<String, dynamic> response)?
+      responseParser;
+
   /// Determines whether pagination params are sent as query or payload.
   ///
+  /// **Deprecated:** Use [payloadMode] instead for consistency.
+  ///
   /// Controlled by [PaginationPayloadMode] (e.g., query vs body).
+  @Deprecated('Use payloadMode instead. Will be removed in v2.0.0')
   final PaginationPayloadMode? paginationMode;
+
+  /// Mode for sending pagination parameters (query string or request body).
+  ///
+  /// Controlled by [PaginationPayloadMode].
+  final PaginationPayloadMode? payloadMode;
 
   /// Last used request parameters, stored for retry functionality.
   Map<String, dynamic>? lastParams;
@@ -139,16 +174,117 @@ class PagyController<T> {
   PagyController({
     required this.endPoint,
     required this.fromMap,
-    required this.responseMapper,
+    @Deprecated('Use responseParser instead') this.responseMapper,
+    this.responseParser,
     this.token,
-    this.additionalQueryParams,
+    @Deprecated('Use query instead') this.additionalQueryParams,
+    this.query,
     this.limit = 4,
-    this.paginationMode,
+    @Deprecated('Use payloadMode instead') this.paginationMode,
+    this.payloadMode,
     this.payloadData,
     this.headers,
     this.requestType = PagyApiRequestType.get,
   }) : controller = ValueNotifier<PagyState<T>>(PagyState<T>()) {
+    // Ensure both old and new parameters work
+    assert(
+      responseMapper != null || responseParser != null,
+      'Either responseMapper or responseParser must be provided',
+    );
     // Ensure global config and dependencies are initialized lazily.
     PagyConfig().ensureInitialized();
   }
+
+  // ---------------------------------------------------------------------------
+  // Convenience Methods
+  // ---------------------------------------------------------------------------
+
+  /// Clears current data and reloads from page 1.
+  ///
+  /// Useful for pull-to-refresh functionality.
+  ///
+  /// Example:
+  /// ```dart
+  /// RefreshIndicator(
+  ///   onRefresh: () async {
+  ///     await controller.refresh();
+  ///   },
+  ///   child: PagyListView(...),
+  /// )
+  /// ```
+  Future<void> refresh() async {
+    itemsList.clear();
+    await loadData();
+  }
+
+  /// Applies filters and reloads data from page 1.
+  ///
+  /// Example:
+  /// ```dart
+  /// controller.applyFilters({'category': 'electronics', 'price_max': 500});
+  /// ```
+  Future<void> applyFilters(Map<String, dynamic> filters) async {
+    itemsList.clear();
+    await loadData(queryParameter: filters);
+  }
+
+  /// Performs a search with the given query.
+  ///
+  /// [searchKey] is the parameter name your API expects (default: 'q').
+  ///
+  /// Example:
+  /// ```dart
+  /// controller.search('laptop', searchKey: 'query');
+  /// ```
+  Future<void> search(String query, {String searchKey = 'q'}) async {
+    itemsList.clear();
+    await loadData(queryParameter: {searchKey: query});
+  }
+
+  /// Explicitly loads the next page of data.
+  ///
+  /// Normally called automatically on scroll, but can be triggered manually.
+  Future<void> loadMore() async {
+    if (state.currentPage < state.totalPages && !state.isMoreFetching) {
+      await loadData();
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // Metadata Getter
+  // ---------------------------------------------------------------------------
+
+  /// Returns pagination metadata for UI display.
+  ///
+  /// Example:
+  /// ```dart
+  /// Text('Page ${controller.metadata.currentPage} of ${controller.metadata.totalPages}');
+  /// LinearProgressIndicator(value: controller.metadata.progress);
+  /// ```
+  PagyMetadata get metadata => PagyMetadata(
+        currentPage: state.currentPage.toInt(),
+        totalPages: state.totalPages.toInt(),
+        itemsPerPage: limit,
+        loadedItems: itemsList.length,
+      );
+
+  // ---------------------------------------------------------------------------
+  // Internal Helpers
+  // ---------------------------------------------------------------------------
+
+  /// Gets the effective response parser (supports both old and new parameters)
+  PagyResponseParser Function(Map<String, dynamic>)?
+      get _effectiveResponseParser =>
+          // ignore: deprecated_member_use_from_same_package
+          responseParser ?? responseMapper;
+
+  /// Gets the effective query parameters (supports both old and new parameters)
+  Map<String, dynamic>? get _effectiveQuery =>
+      // ignore: deprecated_member_use_from_same_package
+      query ?? additionalQueryParams;
+
+  /// Gets the effective payload mode (supports both old and new parameters)
+  PaginationPayloadMode? get _effectivePayloadMode =>
+      // ignore: deprecated_member_use_from_same_package
+      payloadMode ?? paginationMode;
 }

@@ -58,14 +58,31 @@ class PagyConfig {
 
   /// Whether to enable Pagy API logs.
   ///
+  /// **Deprecated:** Use [enableLogs] instead for clarity.
+  ///
   /// Defaults to `true`.
+  @Deprecated('Use enableLogs instead. Will be removed in v2.0.0')
   bool apiLogs = true;
+
+  /// Whether to enable logging for debugging.
+  ///
+  /// Defaults to `true`.
+  bool enableLogs = true;
 
   /// Mode for sending pagination data.
   ///
+  /// **Deprecated:** Use [payloadMode] instead for consistency.
+  ///
   /// Can be `PaginationPayloadMode.queryParams` or
   /// `PaginationPayloadMode.payload`.
+  @Deprecated('Use payloadMode instead. Will be removed in v2.0.0')
   PaginationPayloadMode paginationMode = PaginationPayloadMode.queryParams;
+
+  /// Mode for sending pagination parameters (query string or request body).
+  ///
+  /// Can be `PaginationPayloadMode.queryParams` or
+  /// `PaginationPayloadMode.payload`.
+  PaginationPayloadMode payloadMode = PaginationPayloadMode.queryParams;
 
   /// Optional Dio [Interceptor] for customizing request/response handling.
   Interceptor? dioInterceptor;
@@ -78,6 +95,28 @@ class PagyConfig {
 
   /// Global empty state widget builder.
   Widget Function(VoidCallback onRetry)? globalEmptyBuilder;
+
+  /// Global empty state message.
+  ///
+  /// Used when no custom empty state builder is provided.
+  /// Defaults to `'No data available'`.
+  String globalEmptyMessage = 'No data available';
+
+  /// Global empty state icon.
+  ///
+  /// Displayed above the message. If `null`, no icon is shown.
+  IconData? globalEmptyIcon;
+
+  /// Global setting for showing retry button on empty state.
+  ///
+  /// Defaults to `true`.
+  bool globalShowEmptyRetryButton = true;
+
+  /// Global setting for enabling RefreshIndicator on empty state.
+  ///
+  /// When `true`, empty state is wrapped in a RefreshIndicator.
+  /// Defaults to `false`.
+  bool globalEnableRefreshOnEmpty = false;
 
   /// Global loader widget.
   Widget? globalLoader;
@@ -99,39 +138,95 @@ class PagyConfig {
     String pageKey = 'page',
     String? limitKey,
     double scrollOffset = 200,
-    bool apiLogs = true,
-    PaginationPayloadMode paginationMode = PaginationPayloadMode.queryParams,
+    @Deprecated('Use enableLogs instead') bool? apiLogs,
+    bool? enableLogs,
+    @Deprecated('Use payloadMode instead')
+    PaginationPayloadMode? paginationMode,
+    PaginationPayloadMode? payloadMode,
     Widget Function(String errorMessage, VoidCallback onRetry)? errorBuilder,
     Widget Function(VoidCallback onRetry)? emptyBuilder,
+    String? emptyMessage,
+    IconData? emptyIcon,
+    bool? showEmptyRetryButton,
+    bool? enableRefreshOnEmpty,
     Widget? loader,
     Interceptor? interceptor,
     PagyLogger? customLogger,
   }) {
     if (_initialized) return; // prevent duplicate init
 
+    // Validation assertions
     assert(
       baseUrl == null || baseOptions == null,
-      'Provide only one: baseUrl or baseOptions.',
+      '❌ Provide only one: baseUrl or baseOptions.\n'
+      'You cannot specify both at the same time.',
     );
     assert(
       baseUrl != null || baseOptions != null,
-      'Either baseUrl or baseOptions must be provided.',
+      '❌ Either baseUrl or baseOptions must be provided.\n'
+      'Pagy needs an API endpoint to function.',
     );
 
+    // Validate baseUrl if provided
     if (baseUrl != null) {
+      assert(
+        baseUrl.startsWith('http://') || baseUrl.startsWith('https://'),
+        '❌ baseUrl must start with http:// or https://\n'
+        'Got: "$baseUrl"\n'
+        'Example: "https://api.example.com/"',
+      );
+
+      // Warn about missing trailing slash
+      if (!baseUrl.endsWith('/')) {
+        logger(
+          '⚠️  baseUrl should typically end with / for proper endpoint concatenation\n'
+          'Current: "$baseUrl"\n'
+          'Recommended: "$baseUrl/"\n'
+          'This may cause issues if your endpoints don\' start with /',
+          name: 'Pagy Warning',
+        );
+      }
+
       this.baseUrl = baseUrl;
     } else {
       this.baseOptions = baseOptions;
     }
 
+    // Validate scrollOffset
+    assert(
+      scrollOffset > 0,
+      '❌ scrollOffset must be greater than 0\n'
+      'Got: $scrollOffset\n'
+      'Typical values are between 100-300 pixels',
+    );
+
     this.pageKey = pageKey;
     this.limitKey = limitKey;
     this.scrollOffset = scrollOffset;
-    this.paginationMode = paginationMode;
-    this.apiLogs = apiLogs;
+
+    // Handle both old and new parameters
+    // ignore: deprecated_member_use_from_same_package
+    this.payloadMode =
+        payloadMode ?? paginationMode ?? PaginationPayloadMode.queryParams;
+    // ignore: deprecated_member_use_from_same_package
+    this.paginationMode =
+        this.payloadMode; // Keep in sync for backward compatibility
+
+    // ignore: deprecated_member_use_from_same_package
+    this.enableLogs = enableLogs ?? apiLogs ?? true;
+    // ignore: deprecated_member_use_from_same_package
+    this.apiLogs = this.enableLogs; // Keep in sync for backward compatibility
 
     globalErrorBuilder = errorBuilder;
     globalEmptyBuilder = emptyBuilder;
+    if (emptyMessage != null) globalEmptyMessage = emptyMessage;
+    globalEmptyIcon = emptyIcon;
+    if (showEmptyRetryButton != null) {
+      globalShowEmptyRetryButton = showEmptyRetryButton;
+    }
+    if (enableRefreshOnEmpty != null) {
+      globalEnableRefreshOnEmpty = enableRefreshOnEmpty;
+    }
     globalLoader = loader;
     dioInterceptor = interceptor;
 
@@ -141,6 +236,18 @@ class PagyConfig {
 
     _setupDependencies();
     _initialized = true;
+
+    // Log successful initialization
+    if (this.enableLogs) {
+      logger(
+        '✅ Pagy initialized successfully\n'
+        'Base URL: ${this.baseUrl.isNotEmpty ? this.baseUrl : "(using BaseOptions)"}\n'
+        'Page Key: $pageKey\n'
+        'Limit Key: ${limitKey ?? "(not set)"}\n'
+        'Payload Mode: ${this.payloadMode}',
+        name: 'Pagy Init',
+      );
+    }
   }
 
   /// Ensures Pagy has been initialized.

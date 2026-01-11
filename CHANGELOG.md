@@ -1,3 +1,29 @@
+## 1.0.2
+
+### 🎯 ItemBuilder Enhancement
+
+- ✨ **Index Parameter Support**: Added `itemBuilderWithIndex` parameter that includes item index access
+- 🔧 **Better Item Builders**: Now you can build widgets that need to know their position (e.g., "#1", "#2", etc.)
+- 📝 **Backward Compatible**: Old `itemBuilder` (without index) still works but is deprecated
+- 🔄 **Automatic Migration**: Use `itemBuilderWithIndex: (context, item, index) => ...` instead of `itemBuilder: (context, item) => ...`
+
+## 1.0.1
+
+### 🎯 UX Improvements & New Features
+
+- ✨ **Built-in Response Parsers**: Added `PagyParsers` class with pre-built parsers for common API response structures (Laravel, Django, etc.)
+- 🏷️ **Better Error Handling**: Introduced `PagyError` class with error types, helpful suggestions, and status codes
+- 📊 **Pagination Metadata**: Added `PagyMetadata` for easy access to pagination info in UI (`currentPage`, `totalPages`, `progress`, etc.)
+- 🔧 **Convenience Methods**: Added `refresh()`, `applyFilters()`, `search()`, and `loadMore()` methods to `PagyController`
+- ⚙️ **Enhanced Configuration**: Added validation for `baseUrl`, helpful warnings, and better error messages
+- 📝 **Improved Naming**: Introduced clearer parameter names with deprecation strategy:
+  - `responseMapper` → `responseParser`
+  - `additionalQueryParams` → `query`
+  - `paginationMode` → `payloadMode` (controller & config)
+  - `apiLogs` → `enableLogs`
+- 📚 **Comprehensive Documentation**: Complete README rewrite with examples, migration guide, and common use case
+- 🔄 **Full Backward Compatibility**: All old parameter names still work (deprecated, will be removed in v2.0.0)
+
 ## 1.0.0
 
 - 🚀 Remapped the entire package to Clean Architecture for improved scalability and maintainability.

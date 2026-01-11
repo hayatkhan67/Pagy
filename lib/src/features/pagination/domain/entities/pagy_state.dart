@@ -1,3 +1,4 @@
+import '../../../../core/errors/pagy_error.dart';
 import '../../presentation/controllers/pagy_controller.dart';
 
 /// Holds the current pagination state for Pagy.
@@ -13,15 +14,20 @@ import '../../presentation/controllers/pagy_controller.dart';
 /// - [data]: The list of items currently loaded.
 /// - [currentPage]: The current page number.
 /// - [totalPages]: The total number of pages available.
-/// - [errorMessage]: Any error message from the last request (if any).
+/// - [error]: Detailed error information (recommended).
+/// - [errorMessage]: Simple error message (deprecated, use [error] instead).
 ///
 /// ### Example:
 /// ```dart
 /// if (state.isFetching) {
 ///   return const CircularProgressIndicator();
 /// }
-/// if (state.errorMessage != null) {
-///   return Text('Error: ${state.errorMessage}');
+/// if (state.error != null) {
+///   return ErrorWidget(
+///     message: state.error!.message,
+///     suggestion: state.error!.suggestion,
+///     onRetry: controller.retry,
+///   );
 /// }
 /// return ListView.builder(
 ///   itemCount: state.data.length,
@@ -32,7 +38,7 @@ import '../../presentation/controllers/pagy_controller.dart';
 /// );
 /// ```
 ///
-/// Typically, you won’t create a `PagyState` directly. Instead,
+/// Typically, you won't create a `PagyState` directly. Instead,
 /// it is managed by `PagyController` and exposed through its state
 /// stream or notifier.
 class PagyState<T> {
@@ -55,14 +61,21 @@ class PagyState<T> {
   /// Defaults to `1`.
   final num totalPages;
 
-  /// The error message (if any) from the last fetch.
+  /// Detailed error information from the last fetch.
   ///
-  /// Will be `null` if there is no error.
+  /// Contains error type, message, suggestions, and status code.
+  /// Use this for better error handling and user feedback.
+  final PagyError? error;
+
+  /// Simple error message from the last fetch.
+  ///
+  /// **Deprecated:** Use [error] instead for more detailed error information.
+  @Deprecated('Use error.message instead. Will be removed in v2.0.0')
   final String? errorMessage;
 
   /// Creates a new [PagyState] instance.
   ///
-  /// Typically, you won’t need to use this directly—
+  /// Typically, you won't need to use this directly—
   /// the controller will handle state creation.
   PagyState({
     this.isFetching = false,
@@ -70,7 +83,8 @@ class PagyState<T> {
     this.data = const [],
     this.currentPage = 1,
     this.totalPages = 1,
-    this.errorMessage,
+    this.error,
+    @Deprecated('Use error instead') this.errorMessage,
   });
 
   /// Returns a new [PagyState] with updated values.
@@ -83,6 +97,7 @@ class PagyState<T> {
     List<T>? data,
     num? currentPage,
     num? totalPages,
+    PagyError? error,
     String? errorMessage,
   }) {
     return PagyState<T>(
@@ -91,6 +106,8 @@ class PagyState<T> {
       data: data ?? this.data,
       currentPage: currentPage ?? this.currentPage,
       totalPages: totalPages ?? this.totalPages,
+      error: error ?? this.error,
+      // ignore: deprecated_member_use_from_same_package
       errorMessage: errorMessage ?? this.errorMessage,
     );
   }

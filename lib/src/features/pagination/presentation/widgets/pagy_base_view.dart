@@ -21,7 +21,25 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   final PagyController<T>? controller;
 
   /// Function that builds each item in the list/grid.
-  final Widget Function(BuildContext context, T item) itemBuilder;
+  ///
+  /// **Deprecated:** Use [itemBuilderWithIndex] instead to access the item's index.
+  @Deprecated(
+      'Use itemBuilderWithIndex instead for access to index. Will be removed in v2.0.0')
+  final Widget Function(BuildContext context, T item)? itemBuilder;
+
+  /// Function that builds each item with access to its index.
+  ///
+  /// Example:
+  /// ```dart
+  /// itemBuilderWithIndex: (context, item, index) {
+  ///   return ListTile(
+  ///     leading: Text('#${index + 1}'),
+  ///     title: Text(item.name),
+  ///   );
+  /// }
+  /// ```
+  final Widget Function(BuildContext context, T item, int index)?
+      itemBuilderWithIndex;
 
   /// Enables shimmer placeholders while loading.
   final bool shimmerEffect;
@@ -55,7 +73,37 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   final Widget Function(String, VoidCallback)? errorBuilder;
 
   /// Builder function for rendering an empty state with retry support.
+  ///
+  /// **Deprecated:** Use [emptyStateBuilder] instead for better readability
+  /// with named `retry` parameter.
+  @Deprecated('Use emptyStateBuilder instead. Will be removed in v2.0.0')
   final Widget Function(VoidCallback)? emptyStateRetryBuilder;
+
+  /// Empty state builder with named retry parameter.
+  ///
+  /// Example:
+  /// ```dart
+  /// emptyStateBuilder: ({required retry}) => MyEmptyWidget(onRefresh: retry),
+  /// ```
+  final PagyEmptyStateBuilder? emptyStateBuilder;
+
+  /// Custom message shown in empty state.
+  ///
+  /// Overrides the default "No data available" message.
+  final String? emptyMessage;
+
+  /// Custom icon shown in empty state.
+  final IconData? emptyIcon;
+
+  /// Whether to show the retry button in empty state.
+  ///
+  /// Defaults to `true`.
+  final bool showEmptyRetryButton;
+
+  /// Whether to enable pull-to-refresh on empty state.
+  ///
+  /// Defaults to `false`.
+  final bool enableRefreshOnEmpty;
 
   /// Custom loader widget shown during pagination.
   final Widget? customLoader;
@@ -63,12 +111,13 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Creates a base Pagy-powered view.
   ///
   /// - [controller] is required to manage pagination.
-  /// - [itemBuilder] builds each item in the list/grid.
+  /// - Either [itemBuilder] (deprecated) or [itemBuilderWithIndex] is required.
   /// - [shimmerEffect] requires [placeholderItemModel].
   const PagyBaseView({
     super.key,
     required this.controller,
-    required this.itemBuilder,
+    @Deprecated('Use itemBuilderWithIndex instead') this.itemBuilder,
+    this.itemBuilderWithIndex,
     this.shimmerEffect = false,
     this.placeholderItemCount = 1,
     this.placeholderItemModel,
@@ -78,9 +127,18 @@ abstract class PagyBaseView<T> extends StatelessWidget {
     this.padding,
     this.itemShowLimit,
     this.errorBuilder,
-    this.emptyStateRetryBuilder,
+    @Deprecated('Use emptyStateBuilder instead') this.emptyStateRetryBuilder,
+    this.emptyStateBuilder,
+    this.emptyMessage,
+    this.emptyIcon,
+    this.showEmptyRetryButton = true,
+    this.enableRefreshOnEmpty = false,
     this.customLoader,
-  }) : assert(
+  })  : assert(
+          itemBuilder != null || itemBuilderWithIndex != null,
+          'Either itemBuilder or itemBuilderWithIndex must be provided',
+        ),
+        assert(
           placeholderItemModel != null || !shimmerEffect,
           'PagyBaseView: shimmerEffect is enabled but placeholderItemModel is null.',
         );
@@ -102,7 +160,14 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   Widget buildShimmer(BuildContext context) {
     return PagyShimmer<T>(
       count: placeholderItemCount,
-      itemBuilder: (c, _) => itemBuilder(c, placeholderItemModel as T),
+      itemBuilder: (c, index) {
+        // Use effective item builder
+        if (itemBuilderWithIndex != null) {
+          return itemBuilderWithIndex!(c, placeholderItemModel as T, index);
+        }
+        // ignore: deprecated_member_use_from_same_package
+        return itemBuilder!(c, placeholderItemModel as T);
+      },
       layoutBuilder: (childBuilder) => buildLayout(
         context,
         placeholderItemCount,
@@ -111,11 +176,21 @@ abstract class PagyBaseView<T> extends StatelessWidget {
     );
   }
 
+  /// Gets the effective item builder that works with both old and new signatures
+  Widget Function(BuildContext, T, int) get _effectiveItemBuilder {
+    if (itemBuilderWithIndex != null) {
+      return itemBuilderWithIndex!;
+    }
+    // Wrap old itemBuilder to match new signature
+    // ignore: deprecated_member_use_from_same_package
+    return (context, item, index) => itemBuilder!(context, item);
+  }
+
   @override
   Widget build(BuildContext context) {
     return PagyBuilder<T>(
       controller: controller,
-      itemBuilder: itemBuilder,
+      itemBuilder: _effectiveItemBuilder,
       shimmerEffect: shimmerEffect,
       placeholderItemCount: placeholderItemCount,
       placeholderItemModel: placeholderItemModel,
@@ -126,7 +201,13 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       padding: padding,
       itemShowLimit: itemShowLimit,
       errorBuilder: errorBuilder,
+      // ignore: deprecated_member_use_from_same_package
       emptyStateRetryBuilder: emptyStateRetryBuilder,
+      emptyStateBuilder: emptyStateBuilder,
+      emptyMessage: emptyMessage,
+      emptyIcon: emptyIcon,
+      showEmptyRetryButton: showEmptyRetryButton,
+      enableRefreshOnEmpty: enableRefreshOnEmpty,
       shimmerBuilder: shimmerEffect ? buildShimmer : null,
       layoutBuilder: (ctx, state, itemCount, itemBuilderFn) {
         return buildLayout(ctx, itemCount, itemBuilderFn);

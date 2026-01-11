@@ -68,7 +68,9 @@ extension PagyControllerLoader<T> on PagyController<T> {
     );
 
     try {
-      final mode = paginationMode ?? PagyConfig().paginationMode;
+      final mode = paginationMode ??
+          _effectivePayloadMode ??
+          PagyConfig().paginationMode;
 
       // Build request params
       final PagyParams params = PagyParams(
@@ -76,7 +78,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
         requestType: requestType,
         limit: limit,
         page: currentPage,
-        additionalQueryParams: additionalQueryParams,
+        additionalQueryParams: _effectiveQuery,
         payloadData: payloadData,
         token: token,
         headers: headers,
@@ -97,8 +99,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
       }
 
       // Parse response
-      if (responseMapper != null && response.data != null) {
-        final parsed = responseMapper!(response.data);
+      if (_effectiveResponseParser != null && response.data != null) {
+        final parsed = _effectiveResponseParser!(response.data);
         final List<T> newItems = [];
 
         // Map items with error handling
