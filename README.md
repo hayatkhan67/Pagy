@@ -185,7 +185,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 }
 ```
 
-> **💡 New in v1.0.2:** Use `itemBuilderWithIndex` to access the item's index for features like numbering, alternating colors, or position-based logic.
+> **💡 New in v1.1.1:** Use `itemBuilderWithIndex` to access the item's index for features like numbering, alternating colors, or position-based logic.
 
 ---
 
@@ -444,7 +444,7 @@ Version 1.0.0+ introduces better naming while maintaining backward compatibility
 | `apiLogs` | `enableLogs` |
 | `paginationMode` | `payloadMode` |
 
-### ItemBuilder (v1.0.2+)
+### ItemBuilder (v1.1.1+)
 
 | Old (Deprecated) | New (Recommended) |
 |------------------|-------------------|

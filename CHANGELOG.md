@@ -1,4 +1,4 @@
-## 1.0.2
+## 1.1.1
 
 ### 🎯 ItemBuilder Enhancement
 
@@ -7,10 +7,12 @@
 - 📝 **Backward Compatible**: Old `itemBuilder` (without index) still works but is deprecated
 - 🔄 **Automatic Migration**: Use `itemBuilderWithIndex: (context, item, index) => ...` instead of `itemBuilder: (context, item) => ...`
 
-## 1.0.1
+## 1.1.0
 
 ### 🎯 UX Improvements & New Features
 
+- 🔄 **Refresh on Empty**: Added support for pull-to-refresh when the list is empty
+- 💬 **Empty State Customization**: Added `emptyStateBuilder`, `emptyMessage`, and `emptyIcon` for comprehensive empty state customization
 - ✨ **Built-in Response Parsers**: Added `PagyParsers` class with pre-built parsers for common API response structures (Laravel, Django, etc.)
 - 🏷️ **Better Error Handling**: Introduced `PagyError` class with error types, helpful suggestions, and status codes
 - 📊 **Pagination Metadata**: Added `PagyMetadata` for easy access to pagination info in UI (`currentPage`, `totalPages`, `progress`, etc.)
