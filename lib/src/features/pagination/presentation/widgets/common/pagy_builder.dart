@@ -19,6 +19,16 @@ typedef LayoutBuilderCallback<T> = Widget Function(
 /// Used when shimmer placeholders are enabled.
 typedef ShimmerBuilder = Widget Function(BuildContext context);
 
+/// Signature for building an empty state widget.
+///
+/// The [retry] callback triggers a data reload when invoked.
+/// Using a named parameter improves readability at call sites:
+///
+/// ```dart
+/// emptyStateBuilder: ({required retry}) => MyEmptyWidget(onRefresh: retry),
+/// ```
+typedef PagyEmptyStateBuilder = Widget Function({required VoidCallback retry});
+
 /// Core widget that powers [PagyBaseView], [PagyListView], and [PagyGridView].
 ///
 /// This builder is responsible for:
@@ -90,7 +100,42 @@ class PagyBuilder<T> extends StatelessWidget {
       errorBuilder;
 
   /// Custom empty state widget builder with retry support.
+  ///
+  /// **Deprecated:** Use [emptyStateBuilder] instead for better readability
+  /// with named `retry` parameter.
+  @Deprecated('Use emptyStateBuilder instead. Will be removed in v2.0.0')
   final Widget Function(VoidCallback onRetry)? emptyStateRetryBuilder;
+
+  /// Custom empty state widget builder with named retry parameter.
+  ///
+  /// Example:
+  /// ```dart
+  /// emptyStateBuilder: ({required retry}) => MyEmptyWidget(onRefresh: retry),
+  /// ```
+  final PagyEmptyStateBuilder? emptyStateBuilder;
+
+  /// Custom message shown in empty state.
+  ///
+  /// Overrides the default "No data available" message.
+  /// Only used when no custom [emptyStateBuilder] is provided.
+  final String? emptyMessage;
+
+  /// Custom icon shown in empty state.
+  ///
+  /// Only used when no custom [emptyStateBuilder] is provided.
+  final IconData? emptyIcon;
+
+  /// Whether to show the retry button in empty state.
+  ///
+  /// Defaults to `true`. Set to `false` if you prefer users to
+  /// use pull-to-refresh instead.
+  final bool showEmptyRetryButton;
+
+  /// Whether to enable pull-to-refresh on empty state.
+  ///
+  /// When `true`, wraps the empty state in a [RefreshIndicator]
+  /// allowing users to pull down to retry loading data.
+  final bool enableRefreshOnEmpty;
 
   /// Creates a [PagyBuilder].
   ///
@@ -118,7 +163,12 @@ class PagyBuilder<T> extends StatelessWidget {
     this.scrollPhysics,
     this.padding,
     this.errorBuilder,
-    this.emptyStateRetryBuilder,
+    @Deprecated('Use emptyStateBuilder instead') this.emptyStateRetryBuilder,
+    this.emptyStateBuilder,
+    this.emptyMessage,
+    this.emptyIcon,
+    this.showEmptyRetryButton = true,
+    this.enableRefreshOnEmpty = false,
   });
 
   @override
@@ -236,14 +286,49 @@ class PagyBuilder<T> extends StatelessWidget {
       );
 
   /// Builds a full-screen empty state widget.
-  Widget _buildEmpty() =>
-      emptyStateRetryBuilder?.call(
-        () => controller!.loadData(),
-      ) ??
-      PagyConfig().globalEmptyBuilder?.call(
-            () => controller!.loadData(),
-          ) ??
-      DefaultEmptyWidget(onRetry: () => controller!.loadData());
+  Widget _buildEmpty() {
+    final retryCallback = () => controller!.loadData();
+
+    // Priority: emptyStateBuilder > emptyStateRetryBuilder > global > default
+    Widget emptyWidget;
+
+    if (emptyStateBuilder != null) {
+      emptyWidget = emptyStateBuilder!(retry: retryCallback);
+    } else if (emptyStateRetryBuilder != null) {
+      // ignore: deprecated_member_use_from_same_package
+      emptyWidget = emptyStateRetryBuilder!(retryCallback);
+    } else if (PagyConfig().globalEmptyBuilder != null) {
+      emptyWidget = PagyConfig().globalEmptyBuilder!(retryCallback);
+    } else {
+      emptyWidget = DefaultEmptyWidget(
+        onRetry: retryCallback,
+        message: emptyMessage ?? PagyConfig().globalEmptyMessage,
+        icon: emptyIcon ?? PagyConfig().globalEmptyIcon,
+        showRetryButton:
+            showEmptyRetryButton && PagyConfig().globalShowEmptyRetryButton,
+      );
+    }
+
+    // Wrap with RefreshIndicator if enabled
+    if (enableRefreshOnEmpty || PagyConfig().globalEnableRefreshOnEmpty) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return RefreshIndicator(
+            onRefresh: () => controller!.loadData(),
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(minHeight: constraints.maxHeight),
+                child: emptyWidget,
+              ),
+            ),
+          );
+        },
+      );
+    }
+
+    return emptyWidget;
+  }
 
   /// Returns true if the given [state] has an error message.
   bool _hasError(PagyState<T> state) =>

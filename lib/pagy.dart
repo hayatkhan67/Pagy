@@ -21,6 +21,8 @@ export 'src/features/pagination/presentation/controllers/pagy_controller.dart';
 
 // 📁 Presentation - Widgets - Common
 export 'src/features/pagination/presentation/widgets/common/observer.dart';
+export 'src/features/pagination/presentation/widgets/common/pagy_builder.dart'
+    show PagyEmptyStateBuilder;
 
 // 📁 Presentation - Widgets
 export 'src/features/pagination/presentation/widgets/pagy_grid_view.dart';

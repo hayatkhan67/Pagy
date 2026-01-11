@@ -25,6 +25,7 @@ import 'pagy_base_view.dart';
 /// - Optional max visible items (preview mode)
 /// - Scroll control with `shrinkWrap`, `disableScrolling`, and `scrollPhysics`
 /// - Fully customizable loaders, error, and empty state widgets
+/// - Pull-to-refresh on empty state via `enableRefreshOnEmpty`
 ///
 /// ### Example:
 /// ```dart
@@ -39,6 +40,8 @@ import 'pagy_base_view.dart';
 ///   itemSpacing: 8,
 ///   shimmerEffect: true,
 ///   placeholderItemModel: User.empty(),
+///   emptyMessage: 'No users found',
+///   enableRefreshOnEmpty: true,
 /// )
 /// ```
 /// {@endtemplate}
@@ -66,8 +69,10 @@ class PagyListView<T> extends PagyBaseView<T> {
   ///
   /// - If [shimmerEffect] is enabled, you **must** provide a
   ///   [placeholderItemModel].
-  /// - Supports custom states via [errorBuilder], [emptyStateRetryBuilder],
+  /// - Supports custom states via [errorBuilder], [emptyStateBuilder],
   ///   and [customLoader].
+  /// - Use [emptyMessage] and [emptyIcon] to customize empty state.
+  /// - Set [enableRefreshOnEmpty] to allow pull-to-refresh when empty.
   const PagyListView({
     super.key,
     required super.controller,
@@ -86,7 +91,12 @@ class PagyListView<T> extends PagyBaseView<T> {
     super.padding,
     super.itemShowLimit,
     super.errorBuilder,
-    super.emptyStateRetryBuilder,
+    @Deprecated('Use emptyStateBuilder instead') super.emptyStateRetryBuilder,
+    super.emptyStateBuilder,
+    super.emptyMessage,
+    super.emptyIcon,
+    super.showEmptyRetryButton,
+    super.enableRefreshOnEmpty,
     super.customLoader,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,

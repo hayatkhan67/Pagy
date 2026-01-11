@@ -73,7 +73,37 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   final Widget Function(String, VoidCallback)? errorBuilder;
 
   /// Builder function for rendering an empty state with retry support.
+  ///
+  /// **Deprecated:** Use [emptyStateBuilder] instead for better readability
+  /// with named `retry` parameter.
+  @Deprecated('Use emptyStateBuilder instead. Will be removed in v2.0.0')
   final Widget Function(VoidCallback)? emptyStateRetryBuilder;
+
+  /// Empty state builder with named retry parameter.
+  ///
+  /// Example:
+  /// ```dart
+  /// emptyStateBuilder: ({required retry}) => MyEmptyWidget(onRefresh: retry),
+  /// ```
+  final PagyEmptyStateBuilder? emptyStateBuilder;
+
+  /// Custom message shown in empty state.
+  ///
+  /// Overrides the default "No data available" message.
+  final String? emptyMessage;
+
+  /// Custom icon shown in empty state.
+  final IconData? emptyIcon;
+
+  /// Whether to show the retry button in empty state.
+  ///
+  /// Defaults to `true`.
+  final bool showEmptyRetryButton;
+
+  /// Whether to enable pull-to-refresh on empty state.
+  ///
+  /// Defaults to `false`.
+  final bool enableRefreshOnEmpty;
 
   /// Custom loader widget shown during pagination.
   final Widget? customLoader;
@@ -97,7 +127,12 @@ abstract class PagyBaseView<T> extends StatelessWidget {
     this.padding,
     this.itemShowLimit,
     this.errorBuilder,
-    this.emptyStateRetryBuilder,
+    @Deprecated('Use emptyStateBuilder instead') this.emptyStateRetryBuilder,
+    this.emptyStateBuilder,
+    this.emptyMessage,
+    this.emptyIcon,
+    this.showEmptyRetryButton = true,
+    this.enableRefreshOnEmpty = false,
     this.customLoader,
   })  : assert(
           itemBuilder != null || itemBuilderWithIndex != null,
@@ -166,7 +201,13 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       padding: padding,
       itemShowLimit: itemShowLimit,
       errorBuilder: errorBuilder,
+      // ignore: deprecated_member_use_from_same_package
       emptyStateRetryBuilder: emptyStateRetryBuilder,
+      emptyStateBuilder: emptyStateBuilder,
+      emptyMessage: emptyMessage,
+      emptyIcon: emptyIcon,
+      showEmptyRetryButton: showEmptyRetryButton,
+      enableRefreshOnEmpty: enableRefreshOnEmpty,
       shimmerBuilder: shimmerEffect ? buildShimmer : null,
       layoutBuilder: (ctx, state, itemCount, itemBuilderFn) {
         return buildLayout(ctx, itemCount, itemBuilderFn);

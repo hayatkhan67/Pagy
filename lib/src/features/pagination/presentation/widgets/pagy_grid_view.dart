@@ -10,7 +10,7 @@ import 'pagy_base_view.dart';
 /// `PagyGridView` automatically manages pagination states:
 /// - **Loading** (with shimmer placeholders)
 /// - **Error** (with retry support)
-/// - **Empty** (with retry builder)
+/// - **Empty** (with retry builder or pull-to-refresh)
 /// - **Data** (grid of items)
 ///
 /// It builds a staggered-style grid using [MasonryGridView.builder],
@@ -24,6 +24,8 @@ import 'pagy_base_view.dart';
 /// - Shimmer placeholders for smooth loading
 /// - Built-in retry for empty/error states
 /// - Custom loader, error, and empty widgets
+/// - Customizable empty message and icon via [emptyMessage] and [emptyIcon]
+/// - Pull-to-refresh on empty state via [enableRefreshOnEmpty]
 /// - Flexible grid configuration:
 ///   - `crossAxisCount` for column count
 ///   - `crossAxisSpacing` & `mainAxisSpacing` for spacing
@@ -46,6 +48,9 @@ import 'pagy_base_view.dart';
 ///   crossAxisCount: 2,
 ///   crossAxisSpacing: 8,
 ///   mainAxisSpacing: 12,
+///   emptyMessage: 'No products found',
+///   emptyIcon: Icons.shopping_bag_outlined,
+///   enableRefreshOnEmpty: true,
 /// )
 /// ```
 /// {@endtemplate}
@@ -86,7 +91,12 @@ class PagyGridView<T> extends PagyBaseView<T> {
     super.padding,
     super.itemShowLimit,
     super.errorBuilder,
-    super.emptyStateRetryBuilder,
+    @Deprecated('Use emptyStateBuilder instead') super.emptyStateRetryBuilder,
+    super.emptyStateBuilder,
+    super.emptyMessage,
+    super.emptyIcon,
+    super.showEmptyRetryButton,
+    super.enableRefreshOnEmpty,
     super.customLoader,
     this.crossAxisCount = 2,
     this.crossAxisSpacing = 9,

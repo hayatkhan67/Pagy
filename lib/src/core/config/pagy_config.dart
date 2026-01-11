@@ -96,6 +96,28 @@ class PagyConfig {
   /// Global empty state widget builder.
   Widget Function(VoidCallback onRetry)? globalEmptyBuilder;
 
+  /// Global empty state message.
+  ///
+  /// Used when no custom empty state builder is provided.
+  /// Defaults to `'No data available'`.
+  String globalEmptyMessage = 'No data available';
+
+  /// Global empty state icon.
+  ///
+  /// Displayed above the message. If `null`, no icon is shown.
+  IconData? globalEmptyIcon;
+
+  /// Global setting for showing retry button on empty state.
+  ///
+  /// Defaults to `true`.
+  bool globalShowEmptyRetryButton = true;
+
+  /// Global setting for enabling RefreshIndicator on empty state.
+  ///
+  /// When `true`, empty state is wrapped in a RefreshIndicator.
+  /// Defaults to `false`.
+  bool globalEnableRefreshOnEmpty = false;
+
   /// Global loader widget.
   Widget? globalLoader;
 
@@ -123,6 +145,10 @@ class PagyConfig {
     PaginationPayloadMode? payloadMode,
     Widget Function(String errorMessage, VoidCallback onRetry)? errorBuilder,
     Widget Function(VoidCallback onRetry)? emptyBuilder,
+    String? emptyMessage,
+    IconData? emptyIcon,
+    bool? showEmptyRetryButton,
+    bool? enableRefreshOnEmpty,
     Widget? loader,
     Interceptor? interceptor,
     PagyLogger? customLogger,
@@ -193,6 +219,14 @@ class PagyConfig {
 
     globalErrorBuilder = errorBuilder;
     globalEmptyBuilder = emptyBuilder;
+    if (emptyMessage != null) globalEmptyMessage = emptyMessage;
+    globalEmptyIcon = emptyIcon;
+    if (showEmptyRetryButton != null) {
+      globalShowEmptyRetryButton = showEmptyRetryButton;
+    }
+    if (enableRefreshOnEmpty != null) {
+      globalEnableRefreshOnEmpty = enableRefreshOnEmpty;
+    }
     globalLoader = loader;
     dioInterceptor = interceptor;
 
