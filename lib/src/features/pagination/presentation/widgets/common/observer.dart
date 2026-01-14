@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../pagy.dart';
+import 'pagy_missing_controller_widget.dart';
 
 /// {@template pagy_observer}
 /// A lightweight widget that listens to a [PagyController] and rebuilds
@@ -16,6 +17,7 @@ import '../../../../../../pagy.dart';
 /// - Provides direct access to the current [PagyState]
 /// - Works seamlessly with all `Pagy` views (List/Grid/custom)
 /// - Ideal for building custom UIs like banners, footers, or badges
+/// - Supports nullable controller (shows [MissingControllerWidget] when null)
 ///
 /// ### Example:
 /// ```dart
@@ -35,12 +37,14 @@ import '../../../../../../pagy.dart';
 /// {@endtemplate}
 class PagyObserver<T> extends StatelessWidget {
   /// The controller whose state changes are observed.
-  final PagyController<T> controller;
+  ///
+  /// If null, [MissingControllerWidget] is displayed instead.
+  final PagyController<T>? controller;
 
   /// The builder function that provides the current [PagyState].
   ///
   /// Called whenever the underlying [PagyController] notifies listeners.
-  final Widget Function(BuildContext, PagyState<T>) builder;
+  final Widget Function(BuildContext context, PagyState<T> state) builder;
 
   /// Creates a [PagyObserver] for the given [controller].
   const PagyObserver({
@@ -51,11 +55,15 @@ class PagyObserver<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (controller == null) {
+      return const MissingControllerWidget(name: 'PagyObserver');
+    }
+
     return AnimatedBuilder(
       /// Listens to the internal notifier of the [PagyController].
-      animation: controller.controller,
+      animation: controller!.controller,
       builder: (context, _) {
-        return builder(context, controller.state);
+        return builder(context, controller!.state);
       },
     );
   }

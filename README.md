@@ -328,7 +328,28 @@ PagyGridView<Product>(
 )
 ```
 
-### 5. Show Pagination Info in UI
+### 5. Horizontal List View
+
+Perfect for category carousels, featured products, or horizontal galleries:
+
+```dart
+SizedBox(
+  height: 200,
+  child: PagyHorizontalListView<Category>(
+    controller: categoryController,
+    itemBuilderWithIndex: (context, category, index) {
+      return CategoryCard(category: category);
+    },
+    itemSpacing: 12,
+    shimmerEffect: true,
+    placeholderItemModel: Category.empty(),
+  ),
+)
+```
+
+> **💡 Note:** Wrap `PagyHorizontalListView` in a `SizedBox` or `Container` with a fixed height since horizontal lists need constrained height.
+
+### 6. Show Pagination Info in UI
 
 ```dart
 // Display current page info
@@ -345,7 +366,7 @@ if (pagyController.metadata.hasMore)
   )
 ```
 
-### 6. Error Handling
+### 7. Error Handling
 
 ```dart
 PagyObserver<Product>(

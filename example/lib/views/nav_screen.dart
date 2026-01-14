@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'anime_screen_with_state.dart';
 import 'check_interceptor.dart';
 import 'home_screen.dart';
+import 'horizontal_list_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -26,6 +27,7 @@ class _MainScreenState extends State<MainScreen> {
         children: const [
           HomeScreen(),
           AnimeScreenTest(),
+          HorizontalListScreen(),
           AnimeScreenWithInterceptor(),
         ],
       ),
@@ -49,6 +51,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.movie_outlined),
             selectedIcon: Icon(Icons.movie),
             label: 'Anime',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.view_carousel_outlined),
+            selectedIcon: Icon(Icons.view_carousel),
+            label: 'Horizontal',
           ),
           NavigationDestination(
             icon: Icon(Icons.privacy_tip_outlined),

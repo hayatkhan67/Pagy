@@ -1,3 +1,30 @@
+## 1.2.0
+
+### 🎯 Horizontal ListView Pagination
+
+- ✨ **New Widget**: Added `PagyHorizontalListView<T>` for horizontal scrolling pagination
+- 🔄 **All Features Supported**: Shimmer effects, error handling, empty state, and pull-to-refresh work seamlessly
+- 📐 **Flexible Spacing**: Configure `itemSpacing` for horizontal gaps between items
+- 🎨 **Custom Separators**: Optional `separatorBuilder` for custom item separators
+- 📝 **Same API Pattern**: Follows existing `PagyListView` and `PagyGridView` conventions
+
+### Example Usage
+
+```dart
+SizedBox(
+  height: 200,
+  child: PagyHorizontalListView<Category>(
+    controller: categoryController,
+    itemBuilderWithIndex: (context, category, index) {
+      return CategoryCard(category: category);
+    },
+    itemSpacing: 12,
+    shimmerEffect: true,
+    placeholderItemModel: Category.empty(),
+  ),
+)
+```
+
 ## 1.1.1
 
 ### 🎯 ItemBuilder Enhancement

@@ -137,6 +137,12 @@ class PagyBuilder<T> extends StatelessWidget {
   /// allowing users to pull down to retry loading data.
   final bool enableRefreshOnEmpty;
 
+  /// The scroll direction of the list/grid.
+  ///
+  /// Defaults to [Axis.vertical]. Set to [Axis.horizontal] for
+  /// horizontal scrolling lists.
+  final Axis scrollDirection;
+
   /// Creates a [PagyBuilder].
   ///
   /// Use this widget indirectly via [PagyListView] or [PagyGridView],
@@ -169,6 +175,7 @@ class PagyBuilder<T> extends StatelessWidget {
     this.emptyIcon,
     this.showEmptyRetryButton = true,
     this.enableRefreshOnEmpty = false,
+    this.scrollDirection = Axis.vertical,
   });
 
   @override

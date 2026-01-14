@@ -143,6 +143,12 @@ abstract class PagyBaseView<T> extends StatelessWidget {
           'PagyBaseView: shimmerEffect is enabled but placeholderItemModel is null.',
         );
 
+  /// The scroll direction of the view.
+  ///
+  /// Subclasses can override this to specify horizontal scrolling.
+  /// Defaults to [Axis.vertical].
+  Axis get scrollDirection => Axis.vertical;
+
   /// Must be implemented by child classes to define how items are laid out.
   ///
   /// Examples:
@@ -208,6 +214,7 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       emptyIcon: emptyIcon,
       showEmptyRetryButton: showEmptyRetryButton,
       enableRefreshOnEmpty: enableRefreshOnEmpty,
+      scrollDirection: scrollDirection,
       shimmerBuilder: shimmerEffect ? buildShimmer : null,
       layoutBuilder: (ctx, state, itemCount, itemBuilderFn) {
         return buildLayout(ctx, itemCount, itemBuilderFn);

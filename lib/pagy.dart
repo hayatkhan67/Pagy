@@ -26,4 +26,5 @@ export 'src/features/pagination/presentation/widgets/common/pagy_builder.dart'
 
 // 📁 Presentation - Widgets
 export 'src/features/pagination/presentation/widgets/pagy_grid_view.dart';
+export 'src/features/pagination/presentation/widgets/pagy_horizontal_list_view.dart';
 export 'src/features/pagination/presentation/widgets/pagy_list_view.dart';
