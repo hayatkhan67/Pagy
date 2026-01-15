@@ -185,7 +185,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 }
 ```
 
-> **💡 New in v1.1.1:** Use `itemBuilderWithIndex` to access the item's index for features like numbering, alternating colors, or position-based logic.
+> **💡 New in v1.2.0:** Use `PagyHorizontalListView` for horizontal pagination with optional `useDynamicHeight` support. Also supports `itemBuilderWithIndex` for index access.
 
 ---
 
