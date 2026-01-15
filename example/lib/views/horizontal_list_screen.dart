@@ -74,21 +74,19 @@ class _HorizontalListScreenState extends State<HorizontalListScreen> {
             const SizedBox(height: 12),
 
             // Horizontal Paginated List
-            SizedBox(
-              height: 220,
-              child: PagyHorizontalListView<PropertyModel>(
-                controller: pagyController,
-                itemSpacing: 12,
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                shimmerEffect: true,
-                placeholderItemCount: 3,
-                placeholderItemModel: PropertyModel(),
-                itemBuilderWithIndex: (context, item, index) {
-                  return _PropertyHorizontalCard(property: item, index: index);
-                },
-                emptyMessage: 'No properties found',
-                emptyIcon: Icons.home_work_outlined,
-              ),
+            PagyHorizontalListView<PropertyModel>(
+              // useDynamicHeight: true,
+              controller: pagyController,
+              itemSpacing: 12,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              shimmerEffect: true,
+              placeholderItemCount: 3,
+              placeholderItemModel: PropertyModel(),
+              itemBuilderWithIndex: (context, item, index) {
+                return _PropertyHorizontalCard(property: item, index: index);
+              },
+              emptyMessage: 'No properties found',
+              emptyIcon: Icons.home_work_outlined,
             ),
 
             const SizedBox(height: 32),

@@ -1,3 +1,52 @@
+## 1.2.1
+
+### 🎯 Dynamic Height Support for Horizontal ListView
+
+- ✨ **New Option**: Added `useDynamicHeight` parameter to `PagyHorizontalListView`
+- 📐 **Intrinsic Sizing**: When `useDynamicHeight: true`, height is determined by content (tallest child)
+- 🏗️ **Row-Based Layout**: Uses `Row` + `SingleChildScrollView` instead of `ListView.separated`
+- 📝 **No Fixed Height Needed**: Perfect for use inside `Column`, unbounded `ListView`, or any flex layout
+- 🔄 **Auto-Fallback**: Automatically detects unbounded height constraints and switches to dynamic height layout - no more "Horizontal viewport was given unbounded height" errors!
+- ⚠️ **Performance Note**: Dynamic height builds all items upfront (not lazy) - use with caution for very large lists
+
+### 🔧 PagyObserver Null Controller Support
+
+- ✨ **New Option**: Added `nullBuilder` parameter to `PagyObserver`
+- 🛡️ **Custom Null Handling**: Provide a custom widget when controller is null instead of the default `MissingControllerWidget`
+- 📝 **Backward Compatible**: If `nullBuilder` is not provided, falls back to existing behavior
+
+### Example Usage
+
+```dart
+// Auto-detection - works without SizedBox wrapper!
+Column(
+  children: [
+    Text('Categories'),
+    PagyHorizontalListView<Category>(
+      controller: categoryController,
+      // No useDynamicHeight needed - auto-detected!
+      itemBuilderWithIndex: (context, category, index) {
+        return CategoryCard(category: category);
+      },
+      itemSpacing: 12,
+    ),
+  ],
+)
+
+// With fixed height - uses efficient ListView
+SizedBox(
+  height: 200,
+  child: PagyHorizontalListView<Category>(
+    controller: categoryController,
+    itemBuilderWithIndex: (context, category, index) {
+      return CategoryCard(category: category);
+    },
+  ),
+)
+```
+
+---
+
 ## 1.2.0
 
 ### 🎯 Horizontal ListView Pagination

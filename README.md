@@ -332,6 +332,7 @@ PagyGridView<Product>(
 
 Perfect for category carousels, featured products, or horizontal galleries:
 
+#### Fixed Height (Default)
 ```dart
 SizedBox(
   height: 200,
@@ -347,7 +348,30 @@ SizedBox(
 )
 ```
 
-> **💡 Note:** Wrap `PagyHorizontalListView` in a `SizedBox` or `Container` with a fixed height since horizontal lists need constrained height.
+> **💡 Note:** By default, wrap `PagyHorizontalListView` in a `SizedBox` or `Container` with a fixed height since horizontal lists need constrained height.
+
+#### Dynamic Height (New!)
+
+Use `useDynamicHeight: true` when you want the height to be determined by content (intrinsic sizing). This is useful inside `Column`, `ListView`, or any layout where you don't want a fixed height:
+
+```dart
+Column(
+  children: [
+    Text('Featured Categories'),
+    PagyHorizontalListView<Category>(
+      controller: categoryController,
+      useDynamicHeight: true, // Uses Row + SingleChildScrollView
+      itemBuilderWithIndex: (context, category, index) {
+        return CategoryCard(category: category);
+      },
+      itemSpacing: 12,
+    ),
+  ],
+)
+```
+
+> **💡 Note:** When `useDynamicHeight` is `true`, all items are built upfront (not lazily), so use with caution for very large lists.
+
 
 ### 6. Show Pagination Info in UI
 
