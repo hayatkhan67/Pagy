@@ -163,6 +163,12 @@ class PagyController<T> {
   /// Example: `{ 'Authorization': 'Bearer <token>' }`
   final dynamic headers;
 
+  /// Optional use case override (improves testability).
+  final GetPaginatedDataUseCase? _useCase;
+
+  /// Optional page use case override (Clean Architecture pathway).
+  final GetPaginatedPageUseCase? _pageUseCase;
+
   // ---------------------------------------------------------------------------
   // Constructor
   // ---------------------------------------------------------------------------
@@ -185,7 +191,11 @@ class PagyController<T> {
     this.payloadData,
     this.headers,
     this.requestType = PagyApiRequestType.get,
-  }) : controller = ValueNotifier<PagyState<T>>(PagyState<T>()) {
+    GetPaginatedDataUseCase? useCase,
+    GetPaginatedPageUseCase? pageUseCase,
+  })  : controller = ValueNotifier<PagyState<T>>(PagyState<T>()),
+        _useCase = useCase,
+        _pageUseCase = pageUseCase {
     // Ensure both old and new parameters work
     assert(
       responseMapper != null || responseParser != null,
@@ -202,6 +212,7 @@ class PagyController<T> {
   /// Clears current data and reloads from page 1.
   ///
   /// Useful for pull-to-refresh functionality.
+  /// Use [preserveFilters] to keep existing filters on refresh.
   ///
   /// Example:
   /// ```dart
@@ -212,9 +223,9 @@ class PagyController<T> {
   ///   child: PagyListView(...),
   /// )
   /// ```
-  Future<void> refresh() async {
+  Future<void> refresh({bool? preserveFilters}) async {
     itemsList.clear();
-    await loadData();
+    await loadData(preserveFiltersOnRefresh: preserveFilters);
   }
 
   /// Applies filters and reloads data from page 1.
@@ -241,12 +252,23 @@ class PagyController<T> {
     await loadData(queryParameter: {searchKey: query});
   }
 
+  /// Clears any applied filters and optionally refreshes the list.
+  ///
+  /// When [refresh] is true (default), it reloads from page 1 with no filters.
+  Future<void> clearFilters({bool refresh = true}) async {
+    filter = null;
+    if (refresh) {
+      itemsList.clear();
+      await loadData(preserveFiltersOnRefresh: false);
+    }
+  }
+
   /// Explicitly loads the next page of data.
   ///
   /// Normally called automatically on scroll, but can be triggered manually.
   Future<void> loadMore() async {
     if (state.currentPage < state.totalPages && !state.isMoreFetching) {
-      await loadData();
+      await loadData(refresh: false);
     }
   }
 
@@ -287,4 +309,15 @@ class PagyController<T> {
   PaginationPayloadMode? get _effectivePayloadMode =>
       // ignore: deprecated_member_use_from_same_package
       payloadMode ?? paginationMode;
+
+  /// Gets the effective use case (supports dependency injection override).
+  GetPaginatedDataUseCase get _effectiveUseCase =>
+      _useCase ?? locator.get<GetPaginatedDataUseCase>();
+
+  /// Whether the Clean Architecture page use case is enabled.
+  bool get _usePageUseCase => _pageUseCase != null;
+
+  /// Gets the effective page use case (supports dependency injection override).
+  GetPaginatedPageUseCase get _effectivePageUseCase =>
+      _pageUseCase ?? locator.get<GetPaginatedPageUseCase>();
 }

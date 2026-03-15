@@ -7,10 +7,14 @@ import '../../../../core/utils/pagy_utils.dart';
 class NetworkApiService {
   static final NetworkApiService instance = NetworkApiService._internal();
 
-  late final Dio _dio;
+  late Dio _dio;
 
   NetworkApiService._internal() {
-    _dio = Dio(
+    _dio = _buildDio();
+  }
+
+  Dio _buildDio() {
+    final dio = Dio(
       PagyConfig().baseOptions ??
           BaseOptions(
             baseUrl: PagyConfig().baseUrl,
@@ -22,8 +26,8 @@ class NetworkApiService {
     );
 
     // Enable API logging if configured
-    if (PagyConfig().apiLogs) {
-      _dio.interceptors.add(
+    if (PagyConfig().enableLogs) {
+      dio.interceptors.add(
         LogInterceptor(
           request: true,
           requestBody: true,
@@ -39,8 +43,15 @@ class NetworkApiService {
     // Custom global interceptor if provided
     final interceptor = PagyConfig().dioInterceptor;
     if (interceptor != null) {
-      _dio.interceptors.add(interceptor);
+      dio.interceptors.add(interceptor);
     }
+
+    return dio;
+  }
+
+  /// Rebuilds the underlying Dio client using the latest [PagyConfig].
+  void refreshConfig() {
+    _dio = _buildDio();
   }
 
   /// Unified API request handler (supports GET & POST)

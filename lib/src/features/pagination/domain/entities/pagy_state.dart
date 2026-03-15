@@ -1,11 +1,10 @@
 import '../../../../core/errors/pagy_error.dart';
-import '../../presentation/controllers/pagy_controller.dart';
 
 /// Holds the current pagination state for Pagy.
 ///
 /// `PagyState` is an immutable data holder that represents
 /// the complete state of a paginated list at any given time.
-/// It is used internally by [PagyController] but can also be
+  /// It is used internally by the pagination controller but can also be
 /// accessed externally for building UI based on pagination status.
 ///
 /// ### Properties:
@@ -99,6 +98,7 @@ class PagyState<T> {
     num? totalPages,
     PagyError? error,
     String? errorMessage,
+    bool clearError = false,
   }) {
     return PagyState<T>(
       isFetching: isFetching ?? this.isFetching,
@@ -106,9 +106,9 @@ class PagyState<T> {
       data: data ?? this.data,
       currentPage: currentPage ?? this.currentPage,
       totalPages: totalPages ?? this.totalPages,
-      error: error ?? this.error,
+      error: clearError ? null : (error ?? this.error),
       // ignore: deprecated_member_use_from_same_package
-      errorMessage: errorMessage ?? this.errorMessage,
+      errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
     );
   }
 }

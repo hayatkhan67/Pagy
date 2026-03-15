@@ -105,6 +105,27 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Defaults to `false`.
   final bool enableRefreshOnEmpty;
 
+  /// Whether to wrap the list/grid with a refresh indicator.
+  ///
+  /// Defaults to `true`.
+  final bool enableRefreshIndicator;
+
+  /// Custom refresh handler for pull-to-refresh.
+  ///
+  /// If provided, it runs before the default Pagy refresh.
+  final RefreshCallback? onRefresh;
+
+  /// Whether the refresh action should also trigger Pagy reload.
+  ///
+  /// Defaults to `true`. Set to `false` to fully override refresh.
+  final bool refreshTriggersPagyLoad;
+
+  /// Custom builder for refresh indicator wrapping.
+  ///
+  /// Use this to provide a custom refresh widget.
+  final Widget Function(BuildContext, Widget, RefreshCallback)?
+      refreshIndicatorBuilder;
+
   /// Custom loader widget shown during pagination.
   final Widget? customLoader;
 
@@ -133,6 +154,10 @@ abstract class PagyBaseView<T> extends StatelessWidget {
     this.emptyIcon,
     this.showEmptyRetryButton = true,
     this.enableRefreshOnEmpty = false,
+    this.enableRefreshIndicator = true,
+    this.onRefresh,
+    this.refreshTriggersPagyLoad = true,
+    this.refreshIndicatorBuilder,
     this.customLoader,
   })  : assert(
           itemBuilder != null || itemBuilderWithIndex != null,
@@ -214,6 +239,10 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       emptyIcon: emptyIcon,
       showEmptyRetryButton: showEmptyRetryButton,
       enableRefreshOnEmpty: enableRefreshOnEmpty,
+      enableRefreshIndicator: enableRefreshIndicator,
+      onRefresh: onRefresh,
+      refreshTriggersPagyLoad: refreshTriggersPagyLoad,
+      refreshIndicatorBuilder: refreshIndicatorBuilder,
       scrollDirection: scrollDirection,
       shimmerBuilder: shimmerEffect ? buildShimmer : null,
       layoutBuilder: (ctx, state, itemCount, itemBuilderFn) {

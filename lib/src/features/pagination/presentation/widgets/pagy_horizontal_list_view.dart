@@ -102,6 +102,10 @@ class PagyHorizontalListView<T> extends PagyBaseView<T> {
     super.emptyIcon,
     super.showEmptyRetryButton,
     super.enableRefreshOnEmpty,
+    super.enableRefreshIndicator,
+    super.onRefresh,
+    super.refreshTriggersPagyLoad,
+    super.refreshIndicatorBuilder,
     super.customLoader,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect,

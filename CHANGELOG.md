@@ -1,3 +1,20 @@
+## Unreleased
+
+- 🛠️ Fixed config initialization so controllers created before `PagyConfig.initialize()` no longer lock in an unconfigured state.
+- 🔁 Persisted filters across `loadMore()` and improved retry to reuse the last request page/params.
+- 📦 `PagyController` now reuses constructor `payloadData` when per-call payload is not provided.
+- ✅ Improved error handling by storing `PagyError` in state and rendering it in widgets.
+- 🧩 Added optional Clean Architecture pathway with `PagyPageRepository` and `GetPaginatedPageUseCase`.
+- 🧪 Added `PagyController` unit tests for filter persistence, payload fallback, and retry behavior.
+- 🔧 Fixed `loadMore()` to always fetch the next page (`refresh: false`).
+- 🧭 Added `preserveFiltersOnRefresh` (config + `loadData` arg) and `clearFilters()` helper to control refresh filter behavior.
+- ➕ Added pagination fallbacks when `totalPages` is missing via `PagyResponseParser.hasMore/totalItems` and `PagyConfig.assumeHasMoreWhenTotalPagesNull`.
+- 🧹 Avoid sending null `page`/`limit` pagination params.
+- 🧼 `PagyState.copyWith(clearError: true)` now clears `errorMessage`.
+- ✨ Relaxed shimmer placeholder assert when a custom `shimmerBuilder` is provided.
+- 🧪 Added tests for filter preservation, missing totalPages pagination, and `clearError` behavior.
+- 🔄 Added flexible refresh customization: custom refresh handler, optional default reload, and custom refresh indicator wrapper.
+
 ## 1.2.0
 
 ### 🎯 Horizontal ListView Pagination
