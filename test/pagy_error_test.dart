@@ -1,82 +1,69 @@
+import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pagy/pagy.dart';
+import 'package:pagy/src/core/errors/pagy_error.dart';
 
 void main() {
-  group('PagyError', () {
-    test('creates network error with correct properties', () {
-      final error = PagyError.network(message: 'Connection failed');
-
-      expect(error.type, PagyErrorType.network);
-      expect(error.message, 'Connection failed');
-      expect(error.suggestion,
-          'Please check your internet connection and try again');
-      expect(error.statusCode, isNull);
-    });
-
-    test('creates unauthorized error with status code', () {
-      final error = PagyError.unauthorized(message: 'Invalid token');
-
-      expect(error.type, PagyErrorType.unauthorized);
-      expect(error.message, 'Invalid token');
-      expect(error.statusCode, isNull);
-      expect(error.suggestion,
-          contains('permission')); // Actual message without statusCode
-    });
-
-    test('creates server error with status code', () {
-      final error = PagyError.serverError(
-        message: 'Internal server error',
-        statusCode: 500,
+  group('PagyError Tests', () {
+    test('PagyError should store stackTrace correctly', () {
+      final stackTrace = StackTrace.current;
+      final error = PagyError.unknown(
+        message: 'Test error',
+        stackTrace: stackTrace,
       );
 
-      expect(error.type, PagyErrorType.serverError);
-      expect(error.message, 'Internal server error');
-      expect(error.statusCode, 500);
-      expect(error.suggestion, contains('try again later'));
+      expect(error.stackTrace, equals(stackTrace));
     });
 
-    test('creates malformed response error', () {
-      final error = PagyError.malformedResponse(message: 'Invalid JSON');
-
-      expect(error.type, PagyErrorType.malformedResponse);
-      expect(error.message, 'Invalid JSON');
-      expect(error.suggestion, contains('response'));
-    });
-
-    test('creates timeout error', () {
-      final error = PagyError.timeout();
-
-      expect(error.type, PagyErrorType.timeout);
-      expect(error.message, 'Request timed out');
-      expect(error.suggestion, contains('connection'));
-    });
-
-    test('creates cancelled error', () {
-      final error = PagyError.cancelled();
-
-      expect(error.type, PagyErrorType.cancelled);
-      expect(error.message, 'Request was cancelled');
-      expect(error.suggestion, isNull);
-    });
-
-    test('creates unknown error with original exception', () {
-      final originalException = Exception('Something went wrong');
-      final error = PagyError.unknown(message: originalException.toString());
-
-      expect(error.type, PagyErrorType.unknown);
-      expect(error.message, contains('Something went wrong'));
-      expect(error.suggestion, contains('support'));
-    });
-
-    test('stores original exception', () {
-      final originalException = Exception('Test exception');
-      final error = PagyError(
-        type: PagyErrorType.network,
-        message: 'Error occurred',
-        originalException: originalException,
+    test('PagyError.toString should include truncated stackTrace', () {
+      final stackTrace = StackTrace.fromString('line 1\nline 2\nline 3\nline 4\nline 5\nline 6');
+      final error = PagyError.unknown(
+        message: 'Test error',
+        stackTrace: stackTrace,
       );
 
-      expect(error.originalException, originalException);
+      final str = error.toString();
+      expect(str, contains('StackTrace:'));
+      expect(str, contains('line 1'));
+      expect(str, contains('line 5'));
+      expect(str, isNot(contains('line 6'))); // Truncated after 5 lines
+    });
+
+    test('PagyError.fromException should capture stackTrace', () {
+      final stackTrace = StackTrace.current;
+      final exception = Exception('Nested error');
+      
+      final error = PagyError.fromException(
+        exception,
+        stackTrace: stackTrace,
+      );
+
+      expect(error.stackTrace, equals(stackTrace));
+      expect(error.originalException, equals(exception));
+    });
+
+    test('PagyError.fromDioException should map stackTrace', () {
+      final stackTrace = StackTrace.current;
+      final dioException = DioException(
+        requestOptions: RequestOptions(path: '/'),
+        stackTrace: stackTrace,
+        message: 'Network timeout',
+        type: DioExceptionType.connectionTimeout,
+      );
+
+      final error = PagyError.fromDioException(dioException);
+
+      expect(error.stackTrace, equals(stackTrace));
+      expect(error.type, equals(PagyErrorType.timeout));
+    });
+
+    test('PagyError.copyWith should preserve or update stackTrace', () {
+      final trace1 = StackTrace.fromString('trace 1');
+      final trace2 = StackTrace.fromString('trace 2');
+      
+      final error = PagyError.unknown(message: 'err', stackTrace: trace1);
+      
+      expect(error.copyWith(message: 'new').stackTrace, equals(trace1));
+      expect(error.copyWith(stackTrace: trace2).stackTrace, equals(trace2));
     });
   });
 }

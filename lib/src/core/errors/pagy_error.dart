@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 /// Types of errors that can occur during pagination.
 enum PagyErrorType {
   /// Network connectivity issues
@@ -201,12 +203,73 @@ class PagyError {
     );
   }
 
+  /// Creates a PagyError from a [DioException]
+  factory PagyError.fromDioException(
+    DioException exception, {
+    StackTrace? stackTrace,
+  }) {
+    final message = exception.message ?? 'Unknown API error occurred';
+    final status = exception.response?.statusCode;
+    final trace = stackTrace ?? exception.stackTrace;
+
+    switch (exception.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return PagyError.timeout(
+          message: 'Connection timed out',
+          stackTrace: trace,
+        );
+      case DioExceptionType.badResponse:
+        return PagyError.fromException(
+          exception,
+          statusCode: status,
+          stackTrace: trace,
+        );
+      case DioExceptionType.cancel:
+        return PagyError.cancelled(stackTrace: trace);
+      case DioExceptionType.connectionError:
+        return PagyError.network(
+          exception: exception,
+          stackTrace: trace,
+        );
+      default:
+        return PagyError.unknown(
+          message: message,
+          exception: exception,
+          stackTrace: trace,
+        );
+    }
+  }
+
+  /// Creates a copy of this [PagyError] with the given fields replaced
+  PagyError copyWith({
+    PagyErrorType? type,
+    String? message,
+    String? suggestion,
+    int? statusCode,
+    dynamic originalException,
+    StackTrace? stackTrace,
+  }) {
+    return PagyError(
+      type: type ?? this.type,
+      message: message ?? this.message,
+      suggestion: suggestion ?? this.suggestion,
+      statusCode: statusCode ?? this.statusCode,
+      originalException: originalException ?? this.originalException,
+      stackTrace: stackTrace ?? this.stackTrace,
+    );
+  }
+
   @override
   String toString() {
     final buffer = StringBuffer('PagyError(type: $type, message: $message');
     if (statusCode != null) buffer.write(', statusCode: $statusCode');
     if (suggestion != null) buffer.write(', suggestion: $suggestion');
     buffer.write(')');
+    if (stackTrace != null) {
+      buffer.write('\nStackTrace:\n${stackTrace.toString().split('\n').take(5).join('\n')}...');
+    }
     return buffer.toString();
   }
 

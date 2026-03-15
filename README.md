@@ -47,7 +47,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pagy: ^1.0.0
+  pagy: ^1.2.1
 ```
 
 Then run:
@@ -185,7 +185,82 @@ class _ProductListScreenState extends State<ProductListScreen> {
 }
 ```
 
-> **💡 New in v1.1.1:** Use `itemBuilderWithIndex` to access the item's index for features like numbering, alternating colors, or position-based logic.
+> **💡 New in v1.2.1:** Persistence is now handled automatically. Filters are kept during retries and can optionally be kept during refreshes.
+
+---
+
+## 🔍 Advanced Features
+
+### 1. Filter Persistence
+
+Pagy now automatically persists your filters across `loadMore()` and `retry()` calls. You can also control whether filters are kept when the user pulls to refresh.
+
+**Global Config:**
+```dart
+PagyConfig().initialize(
+  baseUrl: "...",
+  preserveFiltersOnRefresh: true, // Keep filters when pulling to refresh
+);
+```
+
+**Manual Refresh with Control:**
+```dart
+// Keep filters for this refresh only
+pagyController.refresh(preserveFilters: true);
+
+// Clear filters manually
+pagyController.clearFilters();
+```
+
+### 2. Custom Refresh Indicator
+
+You can use any third-party refresh indicator (like `liquid_pull_to_refresh` or `custom_refresh_indicator`) by providing the `refreshIndicatorBuilder`.
+
+```dart
+PagyListView<Product>(
+  controller: pagyController,
+  refreshIndicatorBuilder: (context, child, onRefresh) {
+    return MyCustomRefreshIndicator(
+      onRefresh: onRefresh,
+      child: child,
+    );
+  },
+  itemBuilder: (context, product) => ProductCard(product: product),
+)
+```
+
+### 3. Error Handling & Stacktraces
+
+For better developer experience, `PagyError` now captures the stacktrace of the failure.
+
+```dart
+if (pagyController.controller.value.error != null) {
+  final error = pagyController.controller.value.error!;
+  print(error.message);
+  print(error.stackTrace); // Access the full stacktrace
+}
+```
+
+### 4. Clean Architecture Pathway
+
+Pagy now supports a more structured approach for enterprise apps using repositories and use cases.
+
+```dart
+// 1. Create your repository
+final repository = PagyPageRepository(
+  endPoint: "products",
+  fromMap: Product.fromJson,
+);
+
+// 2. Wrap in a Use Case (optional but recommended)
+final useCase = GetPaginatedPageUseCase(repository);
+
+// 3. Pass to Controller
+pagyController = PagyController(
+  useCase: useCase,
+  // ...other config
+);
+```
 
 ---
 

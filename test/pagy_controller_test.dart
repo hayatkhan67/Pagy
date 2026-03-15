@@ -179,5 +179,94 @@ void main() {
       expect(controller.state.totalPages, 2);
       expect(requests, hasLength(2));
     });
+
+    test('retry should preserve filters from the last failed request', () async {
+      final List<PagyParams> requests = [];
+      bool shouldFail = true;
+
+      final controller = PagyController<int>(
+        endPoint: '/test',
+        fromMap: (json) => json['id'] as int,
+        responseParser: (res) => PagyResponseParser(
+          list: res['data'],
+          totalPages: null,
+        ),
+        useCase: GetPaginatedDataUseCase(FakeRepo((params) async {
+          requests.add(params);
+          if (shouldFail) {
+            throw DioException(requestOptions: RequestOptions(path: '/'));
+          }
+          return _listOnlyResponse([
+            {'id': 1}
+          ]);
+        })),
+      );
+
+      // 1. Initial filtered load that fails
+      await controller.loadData(queryParameter: {'search': 'test'});
+      expect(controller.state.error, isNotNull);
+      expect(requests.last.queryParameter, containsPair('search', 'test'));
+
+      // 2. Retry
+      shouldFail = false;
+      await controller.retry();
+
+      expect(controller.state.error, isNull);
+      expect(requests.last.queryParameter, containsPair('search', 'test'));
+      expect(requests, hasLength(2));
+    });
+
+    test('refresh with preserveFilters: true should keep current filters', () async {
+      final List<PagyParams> requests = [];
+      final controller = PagyController<int>(
+        endPoint: '/test',
+        fromMap: (json) => json['id'] as int,
+        responseParser: (res) => PagyResponseParser(
+          list: res['data'],
+          totalPages: null,
+        ),
+        useCase: GetPaginatedDataUseCase(FakeRepo((params) async {
+          requests.add(params);
+          return _listOnlyResponse([
+            {'id': 1}
+          ]);
+        })),
+      );
+
+      // 1. Load with filters
+      await controller.loadData(queryParameter: {'category': 'tech'});
+      expect(requests.last.queryParameter, containsPair('category', 'tech'));
+
+      // 2. Refresh with preservation
+      await controller.refresh(preserveFilters: true);
+      expect(requests.last.queryParameter, containsPair('category', 'tech'));
+    });
+
+    test('refresh should clear filters by default', () async {
+      final List<PagyParams> requests = [];
+      final controller = PagyController<int>(
+        endPoint: '/test',
+        fromMap: (json) => json['id'] as int,
+        responseParser: (res) => PagyResponseParser(
+          list: res['data'],
+          totalPages: null,
+        ),
+        useCase: GetPaginatedDataUseCase(FakeRepo((params) async {
+          requests.add(params);
+          return _listOnlyResponse([
+            {'id': 1}
+          ]);
+        })),
+      );
+
+      // 1. Load with filters
+      await controller.loadData(queryParameter: {'category': 'tech'});
+      expect(requests.last.queryParameter, containsPair('category', 'tech'));
+
+      // 2. Default refresh
+      await controller.refresh();
+      expect(requests.last.queryParameter, isNot(contains('category')));
+    });
   });
 }
+

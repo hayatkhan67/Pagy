@@ -184,9 +184,9 @@ extension PagyControllerLoader<T> on PagyController<T> {
         for (int i = 0; i < parsed.list.length; i++) {
           try {
             newItems.add(fromMap(parsed.list[i]));
-          } catch (e) {
+          } catch (e, stackTrace) {
             if (!kReleaseMode) {
-              pagyLog("Failed to parse item at index $i: $e");
+              pagyLog("Failed to parse item at index $i: $e\n$stackTrace");
             }
 
             // Only update state if request is still active
@@ -195,6 +195,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
               final parseError = PagyError.malformedResponse(
                 message:
                     "Parsing error on item $i. Please check your model or keys.",
+                stackTrace: stackTrace,
               );
               controller.value = state.copyWith(
                 isFetching: false,
@@ -251,7 +252,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
             "API error: $e \n$stackTrace",
           );
         }
-        final pagyError = _toPagyError(e);
+        final pagyError = _toPagyError(e, stackTrace);
         controller.value = state.copyWith(
           isFetching: false,
           isMoreFetching: false,
@@ -317,16 +318,22 @@ int _resolveTotalPages({
   return currentPage;
 }
 
-PagyError _toPagyError(Object e) {
-  if (e is PagyError) return e;
+PagyError _toPagyError(Object e, [StackTrace? stackTrace]) {
+  if (e is PagyError) {
+    return stackTrace != null ? e.copyWith(stackTrace: stackTrace) : e;
+  }
   if (e is DioException) {
-    return PagyError.fromException(
+    return PagyError.fromDioException(
       e,
-      statusCode: e.response?.statusCode,
+      stackTrace: stackTrace,
     );
   }
   if (e is String) {
-    return PagyError.unknown(message: e);
+    return PagyError.unknown(message: e, stackTrace: stackTrace);
   }
-  return PagyError.unknown(message: e.toString(), exception: e);
+  return PagyError.unknown(
+    message: e.toString(),
+    exception: e,
+    stackTrace: stackTrace,
+  );
 }
