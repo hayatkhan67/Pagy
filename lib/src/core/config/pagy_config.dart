@@ -61,7 +61,7 @@ class PagyConfig {
   /// Whether refresh calls should preserve existing filters by default.
   ///
   /// Defaults to `false` to preserve previous behavior.
-  bool preserveFiltersOnRefresh = false;
+  bool preserveFiltersOnRefresh = true;
 
   /// Whether to assume more pages exist when totalPages is missing.
   ///

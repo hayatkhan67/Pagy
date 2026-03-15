@@ -242,7 +242,7 @@ void main() {
       expect(requests.last.queryParameter, containsPair('category', 'tech'));
     });
 
-    test('refresh should clear filters by default', () async {
+    test('refresh should preserve filters by default (v1.2.2+)', () async {
       final List<PagyParams> requests = [];
       final controller = PagyController<int>(
         endPoint: '/test',
@@ -263,8 +263,34 @@ void main() {
       await controller.loadData(queryParameter: {'category': 'tech'});
       expect(requests.last.queryParameter, containsPair('category', 'tech'));
 
-      // 2. Default refresh
+      // 2. Default refresh (should now PRESERVE by default)
       await controller.refresh();
+      expect(requests.last.queryParameter, containsPair('category', 'tech'));
+    });
+
+    test('refresh with preserveFilters: false should clear filters', () async {
+      final List<PagyParams> requests = [];
+      final controller = PagyController<int>(
+        endPoint: '/test',
+        fromMap: (json) => json['id'] as int,
+        responseParser: (res) => PagyResponseParser(
+          list: res['data'],
+          totalPages: null,
+        ),
+        useCase: GetPaginatedDataUseCase(FakeRepo((params) async {
+          requests.add(params);
+          return _listOnlyResponse([
+            {'id': 1}
+          ]);
+        })),
+      );
+
+      // 1. Load with filters
+      await controller.loadData(queryParameter: {'category': 'tech'});
+      expect(requests.last.queryParameter, containsPair('category', 'tech'));
+
+      // 2. Explicitly clear via refresh
+      await controller.refresh(preserveFilters: false);
       expect(requests.last.queryParameter, isNot(contains('category')));
     });
   });

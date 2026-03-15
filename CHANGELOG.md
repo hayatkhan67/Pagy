@@ -1,4 +1,4 @@
-## 1.2.1 (Unreleased)
+## 1.2.2 (Unreleased)
 
 ### ✨ Features
 - **Stack Trace Support**: `PagyError` now captures and stores `StackTrace` for easier debugging. Accessed via `error.stackTrace`.
@@ -7,13 +7,15 @@
 - **Clean Architecture**: Optional pathway with `PagyPageRepository` and `GetPaginatedPageUseCase`.
 
 ### 🚀 Improvements
-- **Filtered State**: Filters are now persisted across `loadMore()` calls and reused during `retry()`.
+- **Filtered State**: Filters are now persisted across `loadMore()` calls.
 - **Enhanced Logging**: Improved debug logging with stacktrace for API and parsing failures.
 - **Pagination Fallbacks**: Added support for `hasMore/totalItems` metadata and `PagyConfig.assumeHasMoreWhenTotalPagesNull`.
 - **Payload Reuse**: `PagyController` now reuses initial `payloadData` if per-call payload is omitted.
 - **Smart Formatting**: Avoid sending null `page`/`limit` params; clear `errorMessage` when error is fixed.
 
 ### 🛠️ Bug Fixes
+- **Filter Persistence**: Changed `preserveFiltersOnRefresh` default to `true` to ensure pull-to-refresh keeps current filters.
+- **Retry Logic**: Fixed `PagyBuilder` and `PagyControllerLoader` to correctly preserve filters and state during manual retries.
 - **Initialization**: Fixed config race conditions where controllers could lock in an unconfigured state.
 - **Logic**: Fixed `loadMore()` to always fetch next page correctly.
 - **UI**: Relaxed shimmer placeholder requirements when custom `shimmerBuilder` is used.

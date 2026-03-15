@@ -286,15 +286,15 @@ class PagyBuilder<T> extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: errorBuilder?.call(
               error,
-              () => controller!.loadData(refresh: false),
+              () => controller!.retry(),
             ) ??
             PagyConfig().globalErrorBuilder?.call(
                   error,
-                  () => controller!.loadData(refresh: false),
+                  () => controller!.retry(),
                 ) ??
             DefaultErrorWidget(
               errorMessage: error.message,
-              onRetry: () => controller!.loadData(refresh: false),
+              onRetry: () => controller!.retry(),
             ),
       );
     }
@@ -319,20 +319,20 @@ class PagyBuilder<T> extends StatelessWidget {
   Widget _buildFullError(String message) {
     final state = controller!.controller.value;
     final error = state.error ?? PagyError.unknown(message: message);
-    return errorBuilder?.call(error, () => controller!.loadData()) ??
+    return errorBuilder?.call(error, () => controller!.retry()) ??
         PagyConfig().globalErrorBuilder?.call(
               error,
-              () => controller!.loadData(),
+              () => controller!.retry(),
             ) ??
         DefaultErrorWidget(
           errorMessage: message,
-          onRetry: () => controller!.loadData(),
+          onRetry: () => controller!.retry(),
         );
   }
 
   /// Builds a full-screen empty state widget.
   Widget _buildEmpty() {
-    final retryCallback = () => controller!.loadData();
+    final retryCallback = () => controller!.retry();
 
     // Priority: emptyStateBuilder > emptyStateRetryBuilder > global > default
     Widget emptyWidget;
@@ -409,7 +409,7 @@ class PagyBuilder<T> extends StatelessWidget {
       await onRefresh!();
     }
     if (refreshTriggersPagyLoad || onRefresh == null) {
-      await controller!.loadData();
+      await controller!.refresh();
     }
   }
 }
