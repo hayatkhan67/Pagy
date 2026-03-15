@@ -96,7 +96,7 @@ class PagyBuilder<T> extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
 
   /// Custom error widget builder for displaying errors.
-  final Widget Function(String errorMessage, VoidCallback onRetry)?
+  final Widget Function(PagyError error, VoidCallback onRetry)?
       errorBuilder;
 
   /// Custom empty state widget builder with retry support.
@@ -276,21 +276,24 @@ class PagyBuilder<T> extends StatelessWidget {
       return itemBuilder(context, state.data[index], index);
     }
 
-    // 🔹 Inline error footer
+    final error = state.error ??
+        PagyError.unknown(
+          message: state.errorMessage ?? "Unknown error",
+        );
     final errorMessage = _errorMessage(state);
     if (errorMessage != null && state.data.isNotEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: errorBuilder?.call(
-              errorMessage,
+              error,
               () => controller!.loadData(refresh: false),
             ) ??
             PagyConfig().globalErrorBuilder?.call(
-                  errorMessage,
+                  error,
                   () => controller!.loadData(refresh: false),
                 ) ??
             DefaultErrorWidget(
-              errorMessage: errorMessage,
+              errorMessage: error.message,
               onRetry: () => controller!.loadData(refresh: false),
             ),
       );
@@ -313,16 +316,19 @@ class PagyBuilder<T> extends StatelessWidget {
       customLoader ?? PagyConfig().globalLoader ?? const DefaultPagyLoader();
 
   /// Builds a full-screen error state widget.
-  Widget _buildFullError(String message) =>
-      errorBuilder?.call(message, () => controller!.loadData()) ??
-      PagyConfig().globalErrorBuilder?.call(
-            message,
-            () => controller!.loadData(),
-          ) ??
-      DefaultErrorWidget(
-        errorMessage: message,
-        onRetry: () => controller!.loadData(),
-      );
+  Widget _buildFullError(String message) {
+    final state = controller!.controller.value;
+    final error = state.error ?? PagyError.unknown(message: message);
+    return errorBuilder?.call(error, () => controller!.loadData()) ??
+        PagyConfig().globalErrorBuilder?.call(
+              error,
+              () => controller!.loadData(),
+            ) ??
+        DefaultErrorWidget(
+          errorMessage: message,
+          onRetry: () => controller!.loadData(),
+        );
+  }
 
   /// Builds a full-screen empty state widget.
   Widget _buildEmpty() {

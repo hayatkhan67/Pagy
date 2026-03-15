@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../controllers/pagy_controller.dart';
+import '../../../../../pagy.dart';
 import 'common/pagy_builder.dart';
 import 'common/pagy_shimmer.dart';
-import 'pagy_grid_view.dart';
-import 'pagy_list_view.dart';
 
 /// Base widget for Pagy-powered list/grid views.
 ///
@@ -70,7 +68,7 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Builder function for rendering an error state.
   ///
   /// Provides the error message and a retry callback.
-  final Widget Function(String, VoidCallback)? errorBuilder;
+  final Widget Function(PagyError error, VoidCallback onRetry)? errorBuilder;
 
   /// Builder function for rendering an empty state with retry support.
   ///

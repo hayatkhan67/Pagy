@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../../features/pagination/domain/enums/pagy_enum.dart';
 import '../../features/pagination/data/datasources/network_api_service.dart';
 import '../services/dependency_injections.dart';
+import '../errors/pagy_error.dart';
 import '../utils/pagy_utils.dart';
 
 /// Global configuration class for the Pagy package.
@@ -104,7 +105,7 @@ class PagyConfig {
   /// Global error widget builder.
   ///
   /// Used when no custom error UI is provided for a controller.
-  Widget Function(String errorMessage, VoidCallback onRetry)?
+  Widget Function(PagyError error, VoidCallback onRetry)?
       globalErrorBuilder;
 
   /// Global empty state widget builder.
@@ -159,7 +160,7 @@ class PagyConfig {
     @Deprecated('Use payloadMode instead')
     PaginationPayloadMode? paginationMode,
     PaginationPayloadMode? payloadMode,
-    Widget Function(String errorMessage, VoidCallback onRetry)? errorBuilder,
+    Widget Function(PagyError error, VoidCallback onRetry)? errorBuilder,
     Widget Function(VoidCallback onRetry)? emptyBuilder,
     String? emptyMessage,
     IconData? emptyIcon,

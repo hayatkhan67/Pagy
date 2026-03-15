@@ -252,7 +252,7 @@ class PagyController<T> {
     await loadData(queryParameter: {searchKey: query});
   }
 
-  /// Clears any applied filters and optionally refreshes the list.
+  /// Clears all currently applied filters and query parameters.
   ///
   /// When [refresh] is true (default), it reloads from page 1 with no filters.
   Future<void> clearFilters({bool refresh = true}) async {
