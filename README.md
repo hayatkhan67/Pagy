@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Pagy Logo" width="200"/>
+	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/beta/assets/logo.png" alt="Pagy Logo" width="200"/>
 </p>
 
 <h1 align="center">Pagy</h1>
