@@ -38,12 +38,6 @@ class PagyPageRepositoryImpl implements PagyPageRepository {
     final parsed = params.responseParser(response.data as Map<String, dynamic>);
     final parsedList = parsed.list;
 
-    if (parsedList is! List) {
-      throw PagyError.malformedResponse(
-        message: 'Expected list in response parser output',
-      );
-    }
-
     final List<T> items = [];
     for (int i = 0; i < parsedList.length; i++) {
       try {
