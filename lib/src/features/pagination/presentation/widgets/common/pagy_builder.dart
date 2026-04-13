@@ -332,7 +332,7 @@ class PagyBuilder<T> extends StatelessWidget {
 
   /// Builds a full-screen empty state widget.
   Widget _buildEmpty() {
-    final retryCallback = () => controller!.retry();
+    void retryCallback() => controller!.retry();
 
     // Priority: emptyStateBuilder > emptyStateRetryBuilder > global > default
     Widget emptyWidget;

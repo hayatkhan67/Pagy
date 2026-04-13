@@ -50,8 +50,7 @@ class PagyPageRepositoryImpl implements PagyPageRepository {
         items.add(params.fromMap(parsedList[i] as Map<String, dynamic>));
       } catch (e) {
         throw PagyError.malformedResponse(
-          message:
-              'Parsing error on item $i. Please check your model or keys.',
+          message: 'Parsing error on item $i. Please check your model or keys.',
         );
       }
     }

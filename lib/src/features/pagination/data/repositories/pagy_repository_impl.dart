@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 
 import '../../../../../internal_imports.dart';
-import '../../param/pagy_params.dart';
 
 class PagyRepositoryImpl implements PagyRepository {
   final PagyRemoteDataSource _remote;

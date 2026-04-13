@@ -44,7 +44,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pagy: ^1.2.2
+  pagy: ^1.3.0
 ```
 
 Then run:
@@ -182,7 +182,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 }
 ```
 
-> **💡 New in v1.2.2:** Persistence is now handled automatically. Filters are kept during retries and can optionally be kept during refreshes.
+> **💡 New in v1.3.0:** Persistence is now handled automatically. Filters are kept during retries and can optionally be kept during refreshes.
 
 ---
 

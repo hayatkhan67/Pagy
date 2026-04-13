@@ -1,4 +1,4 @@
-## 1.2.2
+## 1.3.0
 
 ### ✨ Features
 - **Stack Trace Support**: `PagyError` now captures and stores `StackTrace` for easier debugging. Accessed via `error.stackTrace`.
@@ -106,7 +106,8 @@ PagyHorizontalListView<Product>(
 
 - Added POST request support and enhanced API interactions.
 - Improved `.gitignore`.
-- Updated dependencies.
+- Updated dependencies:
+  pagy: ^1.3.0
 
 ## 0.0.3+1
 
