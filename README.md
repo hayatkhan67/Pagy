@@ -1,9 +1,6 @@
 <p align="center">
 	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Pagy Logo" width="200"/>
 </p>
-
-<h1 align="center">Pagy</h1>
-
 <p align="center">
 	<i>A powerful Flutter package for effortless API pagination with shimmer effects, error handling, and smooth scrolling</i>
 </p>
@@ -47,7 +44,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pagy: ^1.0.0
+  pagy: ^1.3.0
 ```
 
 Then run:
@@ -185,7 +182,125 @@ class _ProductListScreenState extends State<ProductListScreen> {
 }
 ```
 
-> **💡 New in v1.0.2:** Use `itemBuilderWithIndex` to access the item's index for features like numbering, alternating colors, or position-based logic.
+> **💡 New in v1.3.0:** Persistence is now handled automatically. Filters are kept during retries and can optionally be kept during refreshes.
+
+---
+
+## 🔍 Advanced Features
+
+### 1. Filter Persistence
+
+Pagy now automatically persists your filters across `loadMore()` and `retry()` calls. You can also control whether filters are kept when the user pulls to refresh.
+
+**Global Config:**
+```dart
+PagyConfig().initialize(
+  baseUrl: "...",
+  preserveFiltersOnRefresh: true, // Keep filters when pulling to refresh
+);
+```
+
+**Manual Refresh with Control:**
+```dart
+// Keep filters for this refresh only
+pagyController.refresh(preserveFilters: true);
+
+// Clear filters manually
+pagyController.clearFilters();
+```
+
+### 2. Custom Refresh Indicator
+
+You can use any third-party refresh indicator (like `liquid_pull_to_refresh` or `custom_refresh_indicator`) by providing the `refreshIndicatorBuilder`.
+
+```dart
+PagyListView<Product>(
+  controller: pagyController,
+  refreshIndicatorBuilder: (context, child, onRefresh) {
+    return MyCustomRefreshIndicator(
+      onRefresh: onRefresh,
+      child: child,
+    );
+  },
+  itemBuilder: (context, product) => ProductCard(product: product),
+)
+```
+
+### 3. Error Handling & Stacktraces
+
+For better developer experience, `PagyError` now captures the stacktrace of the failure.
+
+```dart
+if (pagyController.controller.value.error != null) {
+  final error = pagyController.controller.value.error!;
+  print(error.message);
+  print(error.stackTrace); // Access the full stacktrace
+}
+```
+
+### 4. Clean Architecture Pathway
+
+Pagy now supports a more structured approach for enterprise apps using repositories and use cases.
+`PagyPageRepository` is an abstract class — use the built-in `PagyPageRepositoryImpl` or create your own implementation.
+
+```dart
+// 1. Use the built-in repository implementation
+//    (PagyPageRepository is abstract — implement your own or use the default)
+final repository = PagyPageRepositoryImpl(remoteDataSource);
+
+// 2. Wrap in a Use Case (optional but recommended)
+final useCase = GetPaginatedPageUseCase(repository);
+
+// 3. Pass to Controller
+pagyController = PagyController(
+  endPoint: "products",
+  fromMap: Product.fromJson,
+  responseParser: PagyParsers.dataWithPagination,
+  pageUseCase: useCase,
+);
+```
+
+### 5. Pagination Fallback Metadata
+
+Not all APIs return `totalPages`. Pagy supports multiple fallback strategies via `PagyResponseParser`:
+
+```dart
+responseParser: (response) => PagyResponseParser(
+  list: response['data'],
+  totalPages: response['total_pages'],   // Primary: explicit total
+  totalItems: response['total_count'],   // Fallback: computed from count
+  hasMore: response['has_more'],         // Fallback: boolean flag
+),
+```
+
+**Resolution order:** `totalPages` → `totalItems / pageSize` → `hasMore` → assume more (if configured).
+
+If your API provides none of these, enable the global fallback:
+
+```dart
+PagyConfig().initialize(
+  baseUrl: "...",
+  assumeHasMoreWhenTotalPagesNull: true, // Keep loading until an empty page
+);
+```
+
+### 6. Payload Reuse
+
+When using `payloadData` in the controller constructor (e.g., for POST requests), that payload is automatically reused for all subsequent `loadMore()` calls. You can override it per-call:
+
+```dart
+pagyController = PagyController(
+  endPoint: "orders",
+  requestType: PagyApiRequestType.post,
+  payloadData: {'user_id': 123}, // Reused on every loadData() / loadMore()
+  // ...
+);
+
+// Override for a specific call
+await pagyController.loadData(payloadData: {'user_id': 456});
+```
+
+---
 
 ---
 
@@ -328,7 +443,52 @@ PagyGridView<Product>(
 )
 ```
 
-### 5. Show Pagination Info in UI
+### 5. Horizontal List View
+
+Perfect for category carousels, featured products, or horizontal galleries:
+
+#### Fixed Height (Default)
+```dart
+SizedBox(
+  height: 200,
+  child: PagyHorizontalListView<Category>(
+    controller: categoryController,
+    itemBuilderWithIndex: (context, category, index) {
+      return CategoryCard(category: category);
+    },
+    itemSpacing: 12,
+    shimmerEffect: true,
+    placeholderItemModel: Category.empty(),
+  ),
+)
+```
+
+> **💡 Note:** By default, wrap `PagyHorizontalListView` in a `SizedBox` or `Container` with a fixed height since horizontal lists need constrained height.
+
+#### Dynamic Height (New!)
+
+Use `useDynamicHeight: true` when you want the height to be determined by content (intrinsic sizing). This is useful inside `Column`, `ListView`, or any layout where you don't want a fixed height:
+
+```dart
+Column(
+  children: [
+    Text('Featured Categories'),
+    PagyHorizontalListView<Category>(
+      controller: categoryController,
+      useDynamicHeight: true, // Uses Row + SingleChildScrollView
+      itemBuilderWithIndex: (context, category, index) {
+        return CategoryCard(category: category);
+      },
+      itemSpacing: 12,
+    ),
+  ],
+)
+```
+
+> **💡 Note:** When `useDynamicHeight` is `true`, all items are built upfront (not lazily), so use with caution for very large lists.
+
+
+### 6. Show Pagination Info in UI
 
 ```dart
 // Display current page info
@@ -345,7 +505,7 @@ if (pagyController.metadata.hasMore)
   )
 ```
 
-### 6. Error Handling
+### 7. Error Handling
 
 ```dart
 PagyObserver<Product>(
@@ -444,7 +604,7 @@ Version 1.0.0+ introduces better naming while maintaining backward compatibility
 | `apiLogs` | `enableLogs` |
 | `paginationMode` | `payloadMode` |
 
-### ItemBuilder (v1.0.2+)
+### ItemBuilder (v1.1.1+)
 
 | Old (Deprecated) | New (Recommended) |
 |------------------|-------------------|

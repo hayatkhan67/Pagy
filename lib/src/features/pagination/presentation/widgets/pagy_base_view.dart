@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../controllers/pagy_controller.dart';
+import '../../../../../pagy.dart';
 import 'common/pagy_builder.dart';
 import 'common/pagy_shimmer.dart';
-import 'pagy_grid_view.dart';
-import 'pagy_list_view.dart';
 
 /// Base widget for Pagy-powered list/grid views.
 ///
@@ -70,7 +68,7 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Builder function for rendering an error state.
   ///
   /// Provides the error message and a retry callback.
-  final Widget Function(String, VoidCallback)? errorBuilder;
+  final Widget Function(PagyError error, VoidCallback onRetry)? errorBuilder;
 
   /// Builder function for rendering an empty state with retry support.
   ///
@@ -105,6 +103,27 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Defaults to `false`.
   final bool enableRefreshOnEmpty;
 
+  /// Whether to wrap the list/grid with a refresh indicator.
+  ///
+  /// Defaults to `true`.
+  final bool enableRefreshIndicator;
+
+  /// Custom refresh handler for pull-to-refresh.
+  ///
+  /// If provided, it runs before the default Pagy refresh.
+  final RefreshCallback? onRefresh;
+
+  /// Whether the refresh action should also trigger Pagy reload.
+  ///
+  /// Defaults to `true`. Set to `false` to fully override refresh.
+  final bool refreshTriggersPagyLoad;
+
+  /// Custom builder for refresh indicator wrapping.
+  ///
+  /// Use this to provide a custom refresh widget.
+  final Widget Function(BuildContext, Widget, RefreshCallback)?
+      refreshIndicatorBuilder;
+
   /// Custom loader widget shown during pagination.
   final Widget? customLoader;
 
@@ -133,6 +152,10 @@ abstract class PagyBaseView<T> extends StatelessWidget {
     this.emptyIcon,
     this.showEmptyRetryButton = true,
     this.enableRefreshOnEmpty = false,
+    this.enableRefreshIndicator = true,
+    this.onRefresh,
+    this.refreshTriggersPagyLoad = true,
+    this.refreshIndicatorBuilder,
     this.customLoader,
   })  : assert(
           itemBuilder != null || itemBuilderWithIndex != null,
@@ -142,6 +165,12 @@ abstract class PagyBaseView<T> extends StatelessWidget {
           placeholderItemModel != null || !shimmerEffect,
           'PagyBaseView: shimmerEffect is enabled but placeholderItemModel is null.',
         );
+
+  /// The scroll direction of the view.
+  ///
+  /// Subclasses can override this to specify horizontal scrolling.
+  /// Defaults to [Axis.vertical].
+  Axis get scrollDirection => Axis.vertical;
 
   /// Must be implemented by child classes to define how items are laid out.
   ///
@@ -208,6 +237,11 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       emptyIcon: emptyIcon,
       showEmptyRetryButton: showEmptyRetryButton,
       enableRefreshOnEmpty: enableRefreshOnEmpty,
+      enableRefreshIndicator: enableRefreshIndicator,
+      onRefresh: onRefresh,
+      refreshTriggersPagyLoad: refreshTriggersPagyLoad,
+      refreshIndicatorBuilder: refreshIndicatorBuilder,
+      scrollDirection: scrollDirection,
       shimmerBuilder: shimmerEffect ? buildShimmer : null,
       layoutBuilder: (ctx, state, itemCount, itemBuilderFn) {
         return buildLayout(ctx, itemCount, itemBuilderFn);

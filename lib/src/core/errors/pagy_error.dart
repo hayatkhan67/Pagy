@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 /// Types of errors that can occur during pagination.
 enum PagyErrorType {
   /// Network connectivity issues
@@ -53,26 +55,39 @@ class PagyError {
   /// Original exception if available
   final dynamic originalException;
 
+  /// The stack trace associated with this error.
+  final StackTrace? stackTrace;
+
   const PagyError({
     required this.type,
     required this.message,
     this.suggestion,
     this.statusCode,
     this.originalException,
+    this.stackTrace,
   });
 
   /// Creates a network error
-  factory PagyError.network({String? message, dynamic exception}) {
+  factory PagyError.network({
+    String? message,
+    dynamic exception,
+    StackTrace? stackTrace,
+  }) {
     return PagyError(
       type: PagyErrorType.network,
       message: message ?? 'Network connection failed',
       suggestion: 'Please check your internet connection and try again',
       originalException: exception,
+      stackTrace: stackTrace,
     );
   }
 
   /// Creates an unauthorized error (401, 403)
-  factory PagyError.unauthorized({String? message, int? statusCode}) {
+  factory PagyError.unauthorized({
+    String? message,
+    int? statusCode,
+    StackTrace? stackTrace,
+  }) {
     return PagyError(
       type: PagyErrorType.unauthorized,
       message: message ?? 'Authentication required',
@@ -80,6 +95,7 @@ class PagyError {
           ? 'Your session may have expired. Please log in again'
           : 'You don\'t have permission to access this resource',
       statusCode: statusCode,
+      stackTrace: stackTrace,
     );
   }
 
@@ -88,6 +104,7 @@ class PagyError {
     String? message,
     int? statusCode,
     dynamic exception,
+    StackTrace? stackTrace,
   }) {
     return PagyError(
       type: PagyErrorType.serverError,
@@ -95,11 +112,16 @@ class PagyError {
       suggestion: 'The server is experiencing issues. Please try again later',
       statusCode: statusCode,
       originalException: exception,
+      stackTrace: stackTrace,
     );
   }
 
   /// Creates a malformed response error
-  factory PagyError.malformedResponse({String? message, String? field}) {
+  factory PagyError.malformedResponse({
+    String? message,
+    String? field,
+    StackTrace? stackTrace,
+  }) {
     return PagyError(
       type: PagyErrorType.malformedResponse,
       message: message ?? 'Response format is invalid',
@@ -108,51 +130,68 @@ class PagyError {
               'Check your responseParser configuration'
           : 'Response does not match expected format. '
               'Verify your responseParser implementation',
+      stackTrace: stackTrace,
     );
   }
 
   /// Creates a timeout error
-  factory PagyError.timeout({String? message}) {
+  factory PagyError.timeout({
+    String? message,
+    StackTrace? stackTrace,
+  }) {
     return PagyError(
       type: PagyErrorType.timeout,
       message: message ?? 'Request timed out',
       suggestion:
           'The request took too long. Check your connection or try again',
+      stackTrace: stackTrace,
     );
   }
 
   /// Creates a cancelled error
-  factory PagyError.cancelled() {
-    return const PagyError(
+  factory PagyError.cancelled({StackTrace? stackTrace}) {
+    return PagyError(
       type: PagyErrorType.cancelled,
       message: 'Request was cancelled',
+      stackTrace: stackTrace,
     );
   }
 
   /// Creates an unknown error
-  factory PagyError.unknown({String? message, dynamic exception}) {
+  factory PagyError.unknown({
+    String? message,
+    dynamic exception,
+    StackTrace? stackTrace,
+  }) {
     return PagyError(
       type: PagyErrorType.unknown,
       message: message ?? 'An unexpected error occurred',
       suggestion: 'Please try again or contact support if the issue persists',
       originalException: exception,
+      stackTrace: stackTrace,
     );
   }
 
   /// Creates a PagyError from an exception
-  factory PagyError.fromException(dynamic exception, {int? statusCode}) {
+  factory PagyError.fromException(
+    dynamic exception, {
+    int? statusCode,
+    StackTrace? stackTrace,
+  }) {
     if (exception.toString().toLowerCase().contains('network')) {
-      return PagyError.network(exception: exception);
+      return PagyError.network(exception: exception, stackTrace: stackTrace);
     }
 
     if (statusCode != null) {
       if (statusCode == 401 || statusCode == 403) {
-        return PagyError.unauthorized(statusCode: statusCode);
+        return PagyError.unauthorized(
+            statusCode: statusCode, stackTrace: stackTrace);
       }
       if (statusCode >= 500) {
         return PagyError.serverError(
           statusCode: statusCode,
           exception: exception,
+          stackTrace: stackTrace,
         );
       }
     }
@@ -160,6 +199,65 @@ class PagyError {
     return PagyError.unknown(
       message: exception.toString(),
       exception: exception,
+      stackTrace: stackTrace,
+    );
+  }
+
+  /// Creates a PagyError from a [DioException]
+  factory PagyError.fromDioException(
+    DioException exception, {
+    StackTrace? stackTrace,
+  }) {
+    final message = exception.message ?? 'Unknown API error occurred';
+    final status = exception.response?.statusCode;
+    final trace = stackTrace ?? exception.stackTrace;
+
+    switch (exception.type) {
+      case DioExceptionType.connectionTimeout:
+      case DioExceptionType.sendTimeout:
+      case DioExceptionType.receiveTimeout:
+        return PagyError.timeout(
+          message: 'Connection timed out',
+          stackTrace: trace,
+        );
+      case DioExceptionType.badResponse:
+        return PagyError.fromException(
+          exception,
+          statusCode: status,
+          stackTrace: trace,
+        );
+      case DioExceptionType.cancel:
+        return PagyError.cancelled(stackTrace: trace);
+      case DioExceptionType.connectionError:
+        return PagyError.network(
+          exception: exception,
+          stackTrace: trace,
+        );
+      default:
+        return PagyError.unknown(
+          message: message,
+          exception: exception,
+          stackTrace: trace,
+        );
+    }
+  }
+
+  /// Creates a copy of this [PagyError] with the given fields replaced
+  PagyError copyWith({
+    PagyErrorType? type,
+    String? message,
+    String? suggestion,
+    int? statusCode,
+    dynamic originalException,
+    StackTrace? stackTrace,
+  }) {
+    return PagyError(
+      type: type ?? this.type,
+      message: message ?? this.message,
+      suggestion: suggestion ?? this.suggestion,
+      statusCode: statusCode ?? this.statusCode,
+      originalException: originalException ?? this.originalException,
+      stackTrace: stackTrace ?? this.stackTrace,
     );
   }
 
@@ -169,6 +267,9 @@ class PagyError {
     if (statusCode != null) buffer.write(', statusCode: $statusCode');
     if (suggestion != null) buffer.write(', suggestion: $suggestion');
     buffer.write(')');
+    if (stackTrace != null) {
+      buffer.write('\nStackTrace:\n${stackTrace.toString().split('\n').take(5).join('\n')}...');
+    }
     return buffer.toString();
   }
 

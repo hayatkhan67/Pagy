@@ -20,6 +20,15 @@ extension PagyControllerHelpers<T> on PagyController<T> {
     });
   }
 
+  /// Attaches a listener and returns a callback to remove it.
+  ///
+  /// Useful to avoid memory leaks in widgets or services.
+  VoidCallback listenWithCancel(void Function(List<T> items) onChanged) {
+    void listener() => onChanged(List<T>.from(itemsList));
+    controller.addListener(listener);
+    return () => controller.removeListener(listener);
+  }
+
   /// Replaces the entire dataset with [newData].
   void updateData(List<T> newData) {
     itemsList
@@ -129,6 +138,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
 
   /// Disposes the underlying [ValueNotifier] to free resources.
   void dispose() {
+    cancelToken?.cancel("PagyController disposed");
     controller.dispose();
   }
 }

@@ -85,7 +85,7 @@ PagyConfig().initialize(
 
 ---
 
-### ItemBuilder (v1.0.2+)
+### ItemBuilder (v1.1.1+)
 
 | Old Name | New Name | Reason |
 |----------|----------|--------|
@@ -93,7 +93,7 @@ PagyConfig().initialize(
 
 #### Example Migration
 
-**Before (v1.0.1 and earlier):**
+**Before (v1.1.0 and earlier):**
 ```dart
 PagyListView<Product>(
   controller: pagyController,
@@ -103,7 +103,7 @@ PagyListView<Product>(
 )
 ```
 
-**After (v1.0.2+):**
+**After (v1.1.1+):**
 ```dart
 PagyListView<Product>(
   controller: pagyController,

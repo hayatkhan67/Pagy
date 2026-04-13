@@ -96,7 +96,7 @@ class PagyBuilder<T> extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
 
   /// Custom error widget builder for displaying errors.
-  final Widget Function(String errorMessage, VoidCallback onRetry)?
+  final Widget Function(PagyError error, VoidCallback onRetry)?
       errorBuilder;
 
   /// Custom empty state widget builder with retry support.
@@ -137,6 +137,33 @@ class PagyBuilder<T> extends StatelessWidget {
   /// allowing users to pull down to retry loading data.
   final bool enableRefreshOnEmpty;
 
+  /// Whether to wrap the list/grid with a refresh indicator.
+  ///
+  /// Defaults to `true`.
+  final bool enableRefreshIndicator;
+
+  /// Custom refresh handler for pull-to-refresh.
+  ///
+  /// If provided, it runs before the default Pagy refresh.
+  final RefreshCallback? onRefresh;
+
+  /// Whether the refresh action should also trigger Pagy reload.
+  ///
+  /// Defaults to `true`. Set to `false` to fully override refresh.
+  final bool refreshTriggersPagyLoad;
+
+  /// Custom builder for refresh indicator wrapping.
+  ///
+  /// Use this to provide a custom refresh widget.
+  final Widget Function(BuildContext, Widget, RefreshCallback)?
+      refreshIndicatorBuilder;
+
+  /// The scroll direction of the list/grid.
+  ///
+  /// Defaults to [Axis.vertical]. Set to [Axis.horizontal] for
+  /// horizontal scrolling lists.
+  final Axis scrollDirection;
+
   /// Creates a [PagyBuilder].
   ///
   /// Use this widget indirectly via [PagyListView] or [PagyGridView],
@@ -169,7 +196,16 @@ class PagyBuilder<T> extends StatelessWidget {
     this.emptyIcon,
     this.showEmptyRetryButton = true,
     this.enableRefreshOnEmpty = false,
-  });
+    this.enableRefreshIndicator = true,
+    this.onRefresh,
+    this.refreshTriggersPagyLoad = true,
+    this.refreshIndicatorBuilder,
+    this.scrollDirection = Axis.vertical,
+  }) : assert(
+          placeholderItemModel != null || !shimmerEffect || shimmerBuilder != null,
+        'PagyBuilder: shimmerEffect is true but placeholderItemModel is null. '
+        'Provide a placeholderItemModel or a custom shimmerBuilder.',
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -188,8 +224,9 @@ class PagyBuilder<T> extends StatelessWidget {
         }
 
         // 2️⃣ Full-screen error state (when no data available)
-        if (_hasError(state) && state.data.isEmpty) {
-          return _buildFullError(state.errorMessage!);
+        final errorMessage = _errorMessage(state);
+        if (errorMessage != null && state.data.isEmpty) {
+          return _buildFullError(errorMessage);
         }
 
         // 3️⃣ Empty state
@@ -198,7 +235,7 @@ class PagyBuilder<T> extends StatelessWidget {
         }
 
         // 4️⃣ Normal list with optional inline error/footer
-        final hasInlineError = _hasError(state) && state.data.isNotEmpty;
+        final hasInlineError = errorMessage != null && state.data.isNotEmpty;
         final baseCount = calculatePagyItemCount(state, itemShowLimit);
         final totalCount = baseCount + (hasInlineError ? 1 : 0);
 
@@ -212,14 +249,15 @@ class PagyBuilder<T> extends StatelessWidget {
             }
             return false;
           },
-          child: RefreshIndicator(
-            onRefresh: () => controller!.loadData(),
-            child: layoutBuilder(
+          child: _buildRefreshWrapper(
+            context,
+            layoutBuilder(
               context,
               state,
               totalCount,
               (ctx, index) => _buildItem(ctx, index, state),
             ),
+            enabled: enableRefreshIndicator,
           ),
         );
       },
@@ -238,21 +276,25 @@ class PagyBuilder<T> extends StatelessWidget {
       return itemBuilder(context, state.data[index], index);
     }
 
-    // 🔹 Inline error footer
-    if (_hasError(state) && state.data.isNotEmpty) {
+    final error = state.error ??
+        PagyError.unknown(
+          message: state.errorMessage ?? "Unknown error",
+        );
+    final errorMessage = _errorMessage(state);
+    if (errorMessage != null && state.data.isNotEmpty) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 16),
         child: errorBuilder?.call(
-              state.errorMessage!,
-              () => controller!.loadData(refresh: false),
+              error,
+              () => controller!.retry(),
             ) ??
             PagyConfig().globalErrorBuilder?.call(
-                  state.errorMessage!,
-                  () => controller!.loadData(refresh: false),
+                  error,
+                  () => controller!.retry(),
                 ) ??
             DefaultErrorWidget(
-              errorMessage: state.errorMessage!,
-              onRetry: () => controller!.loadData(refresh: false),
+              errorMessage: error.message,
+              onRetry: () => controller!.retry(),
             ),
       );
     }
@@ -274,20 +316,23 @@ class PagyBuilder<T> extends StatelessWidget {
       customLoader ?? PagyConfig().globalLoader ?? const DefaultPagyLoader();
 
   /// Builds a full-screen error state widget.
-  Widget _buildFullError(String message) =>
-      errorBuilder?.call(message, () => controller!.loadData()) ??
-      PagyConfig().globalErrorBuilder?.call(
-            message,
-            () => controller!.loadData(),
-          ) ??
-      DefaultErrorWidget(
-        errorMessage: message,
-        onRetry: () => controller!.loadData(),
-      );
+  Widget _buildFullError(String message) {
+    final state = controller!.controller.value;
+    final error = state.error ?? PagyError.unknown(message: message);
+    return errorBuilder?.call(error, () => controller!.retry()) ??
+        PagyConfig().globalErrorBuilder?.call(
+              error,
+              () => controller!.retry(),
+            ) ??
+        DefaultErrorWidget(
+          errorMessage: message,
+          onRetry: () => controller!.retry(),
+        );
+  }
 
   /// Builds a full-screen empty state widget.
   Widget _buildEmpty() {
-    final retryCallback = () => controller!.loadData();
+    void retryCallback() => controller!.retry();
 
     // Priority: emptyStateBuilder > emptyStateRetryBuilder > global > default
     Widget emptyWidget;
@@ -313,15 +358,16 @@ class PagyBuilder<T> extends StatelessWidget {
     if (enableRefreshOnEmpty || PagyConfig().globalEnableRefreshOnEmpty) {
       return LayoutBuilder(
         builder: (context, constraints) {
-          return RefreshIndicator(
-            onRefresh: () => controller!.loadData(),
-            child: SingleChildScrollView(
+          return _buildRefreshWrapper(
+            context,
+            SingleChildScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               child: ConstrainedBox(
                 constraints: BoxConstraints(minHeight: constraints.maxHeight),
                 child: emptyWidget,
               ),
             ),
+            enabled: true,
           );
         },
       );
@@ -331,13 +377,39 @@ class PagyBuilder<T> extends StatelessWidget {
   }
 
   /// Returns true if the given [state] has an error message.
-  bool _hasError(PagyState<T> state) =>
-      (state.errorMessage?.isNotEmpty ?? false);
+  String? _errorMessage(PagyState<T> state) {
+    final message = state.error?.message ?? state.errorMessage;
+    if (message == null || message.isEmpty) return null;
+    return message;
+  }
 
   Widget _buildShimmerItem(BuildContext context) {
     return Skeletonizer(
       enabled: true,
       child: itemBuilder(context, placeholderItemModel as T, 0),
     );
+  }
+
+  Widget _buildRefreshWrapper(
+    BuildContext context,
+    Widget child, {
+    required bool enabled,
+  }) {
+    if (!enabled) return child;
+
+    final refreshHandler = _handleRefresh;
+    if (refreshIndicatorBuilder != null) {
+      return refreshIndicatorBuilder!(context, child, refreshHandler);
+    }
+    return RefreshIndicator(onRefresh: refreshHandler, child: child);
+  }
+
+  Future<void> _handleRefresh() async {
+    if (onRefresh != null) {
+      await onRefresh!();
+    }
+    if (refreshTriggersPagyLoad || onRefresh == null) {
+      await controller!.refresh();
+    }
   }
 }

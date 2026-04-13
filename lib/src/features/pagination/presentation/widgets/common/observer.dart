@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../../../../pagy.dart';
+import 'pagy_missing_controller_widget.dart';
 
 /// {@template pagy_observer}
 /// A lightweight widget that listens to a [PagyController] and rebuilds
@@ -16,6 +17,7 @@ import '../../../../../../pagy.dart';
 /// - Provides direct access to the current [PagyState]
 /// - Works seamlessly with all `Pagy` views (List/Grid/custom)
 /// - Ideal for building custom UIs like banners, footers, or badges
+/// - Supports nullable controller with customizable fallback UI
 ///
 /// ### Example:
 /// ```dart
@@ -32,30 +34,70 @@ import '../../../../../../pagy.dart';
 ///   },
 /// )
 /// ```
+///
+/// ### Null Controller Handling:
+/// ```dart
+/// PagyObserver<User>(
+///   controller: maybeNullController, // Can be null
+///   nullBuilder: (context) => const Text('No data available'),
+///   builder: (context, state) => UserList(users: state.data),
+/// )
+/// ```
 /// {@endtemplate}
 class PagyObserver<T> extends StatelessWidget {
   /// The controller whose state changes are observed.
-  final PagyController<T> controller;
+  ///
+  /// If null, [nullBuilder] is displayed if provided, otherwise
+  /// [MissingControllerWidget] is shown.
+  final PagyController<T>? controller;
 
   /// The builder function that provides the current [PagyState].
   ///
   /// Called whenever the underlying [PagyController] notifies listeners.
-  final Widget Function(BuildContext, PagyState<T>) builder;
+  final Widget Function(BuildContext context, PagyState<T> state) builder;
+
+  /// Optional builder for when the controller is null.
+  ///
+  /// If not provided and controller is null, [MissingControllerWidget]
+  /// will be displayed instead.
+  ///
+  /// Example:
+  /// ```dart
+  /// PagyObserver<Product>(
+  ///   controller: productController, // May be null
+  ///   nullBuilder: (context) => const EmptyStateWidget(),
+  ///   builder: (context, state) => ProductGrid(products: state.data),
+  /// )
+  /// ```
+  final Widget Function(BuildContext context)? nullBuilder;
 
   /// Creates a [PagyObserver] for the given [controller].
+  ///
+  /// - [controller] can be null; if so, [nullBuilder] or [MissingControllerWidget] is shown.
+  /// - [builder] is called when controller is available with the current state.
+  /// - [nullBuilder] is optional; provides custom UI when controller is null.
   const PagyObserver({
     super.key,
     required this.controller,
     required this.builder,
+    this.nullBuilder,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (controller == null) {
+      // Use custom nullBuilder if provided, otherwise show default missing widget
+      if (nullBuilder != null) {
+        return nullBuilder!(context);
+      }
+      return const MissingControllerWidget(name: 'PagyObserver');
+    }
+
     return AnimatedBuilder(
       /// Listens to the internal notifier of the [PagyController].
-      animation: controller.controller,
+      animation: controller!.controller,
       builder: (context, _) {
-        return builder(context, controller.state);
+        return builder(context, controller!.state);
       },
     );
   }

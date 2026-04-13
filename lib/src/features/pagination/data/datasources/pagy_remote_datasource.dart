@@ -14,8 +14,10 @@ class PagyRemoteDataSource {
     final cfg = PagyConfig();
 
     final paginationParams = {
-      if (cfg.pageKey.isNotEmpty) cfg.pageKey: params.page,
-      if (cfg.limitKey?.isNotEmpty ?? false) cfg.limitKey!: params.limit,
+      if (cfg.pageKey.isNotEmpty && params.page != null)
+        cfg.pageKey: params.page,
+      if ((cfg.limitKey?.isNotEmpty ?? false) && params.limit != null)
+        cfg.limitKey!: params.limit,
     };
 
     final mergedQuery = {
@@ -33,16 +35,22 @@ class PagyRemoteDataSource {
           ? params.payloadData
           : null;
     } else {
-      if (params.payloadData is Map) {
+      final additionalQuery = {...?params.additionalQueryParams};
+      if (params.payloadData == null) {
+        body = {...paginationParams, ...mergedQuery};
+        queryParameters = additionalQuery;
+      } else if (params.payloadData is Map) {
         body = {...paginationParams, ...mergedQuery, ...params.payloadData};
+        queryParameters = additionalQuery;
       } else {
-        body = {
+        // If payload isn't a Map, keep it intact and send pagination via query.
+        body = params.payloadData;
+        queryParameters = {
+          ...additionalQuery,
           ...paginationParams,
           ...mergedQuery,
-          ...params.payloadData,
         };
       }
-      queryParameters = {...?params.additionalQueryParams};
     }
 
     final Response apiResponse;

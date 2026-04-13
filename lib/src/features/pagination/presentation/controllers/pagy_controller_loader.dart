@@ -30,6 +30,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
   /// - [queryParameter]: Custom filters or query params.
   /// - [paginationMode]: Override global [PaginationPayloadMode].
   /// - [payloadData]: Extra payload for POST/PUT requests.
+  /// - [pageOverride]: Force a specific page number (used for retry).
+  /// - [preserveFiltersOnRefresh]: Keep existing filters when refreshing.
   ///
   /// ### Example:
   /// ```dart
@@ -41,18 +43,24 @@ extension PagyControllerLoader<T> on PagyController<T> {
     Map<String, dynamic>? queryParameter,
     PaginationPayloadMode? paginationMode,
     dynamic payloadData,
+    num? pageOverride,
+    bool? preserveFiltersOnRefresh,
   }) async {
+    final shouldPreserveFilters = preserveFiltersOnRefresh ??
+        PagyConfig().preserveFiltersOnRefresh;
+
     // Store filter state
     if (queryParameter != null) {
       filter = queryParameter;
-    } else if (queryParameter == null && refresh) {
+    } else if (queryParameter == null && refresh && !shouldPreserveFilters) {
       filter = null;
     }
 
     final state = controller.value;
 
     // Check pagination bounds for non-refresh requests
-    final num currentPage = refresh ? 1 : state.currentPage + 1;
+    final num currentPage =
+        pageOverride ?? (refresh ? 1 : state.currentPage + 1);
     if (!refresh && currentPage > state.totalPages) return;
 
     // Cancel any existing request and create new token
@@ -65,32 +73,101 @@ extension PagyControllerLoader<T> on PagyController<T> {
       isFetching: refresh,
       isMoreFetching: !refresh,
       errorMessage: '',
+      clearError: true,
     );
 
     try {
-      final mode = paginationMode ??
-          _effectivePayloadMode ??
-          PagyConfig().paginationMode;
+      final mode =
+          paginationMode ?? _effectivePayloadMode ?? PagyConfig().payloadMode;
 
-      // Build request params
+      final effectiveQueryParameter = queryParameter ?? filter;
+      final effectivePayload = payloadData ?? this.payloadData;
+
+      // Store last request parameters for retry
+      lastParams = {
+        'refresh': refresh,
+        'page': currentPage,
+        'queryParameter': effectiveQueryParameter,
+        'paginationMode': mode,
+        'payloadData': effectivePayload,
+      };
+
+      if (_usePageUseCase) {
+        if (_effectiveResponseParser == null) {
+          throw Exception(
+            'responseParser is required when using the page use case.',
+          );
+        }
+
+        final PagyPageParams<T> pageParams = PagyPageParams<T>(
+          endPoint: endPoint,
+          requestType: requestType,
+          limit: limit,
+          page: currentPage,
+          additionalQueryParams: _effectiveQuery,
+          payloadData: effectivePayload,
+          token: token,
+          headers: headers,
+          paginationMode: mode,
+          cancelToken: currentRequestToken,
+          queryParameter: effectiveQueryParameter,
+          responseParser: _effectiveResponseParser!,
+          fromMap: fromMap,
+        );
+
+        final PagyPage<T> page =
+            await _effectivePageUseCase.call(pageParams);
+
+        // Verify request is still active
+        if (currentRequestToken.isCancelled ||
+            cancelToken != currentRequestToken) {
+          return;
+        }
+
+        if (refresh) itemsList.clear();
+        itemsList.addAll(page.items);
+
+        final int resolvedTotalPages = _resolveTotalPages(
+          totalPages: page.totalPages,
+          totalItems: page.totalItems,
+          hasMore: page.hasMore,
+          currentPage: currentPage.toInt(),
+          pageSize: limit,
+          newItemsCount: page.items.length,
+          assumeHasMore:
+              PagyConfig().assumeHasMoreWhenTotalPagesNull,
+        );
+
+        controller.value = state.copyWith(
+          data: [...itemsList],
+          currentPage: currentPage,
+          totalPages: resolvedTotalPages,
+          isFetching: false,
+          isMoreFetching: false,
+          errorMessage: '',
+          clearError: true,
+        );
+        return;
+      }
+
+      // Build request params (legacy path)
       final PagyParams params = PagyParams(
         endPoint: endPoint,
         requestType: requestType,
         limit: limit,
         page: currentPage,
         additionalQueryParams: _effectiveQuery,
-        payloadData: payloadData,
+        payloadData: effectivePayload,
         token: token,
         headers: headers,
         paginationMode: mode,
         cancelToken: currentRequestToken,
-        queryParameter: queryParameter,
+        queryParameter: effectiveQueryParameter,
         fromMap: fromMap,
       );
 
       // Execute API call
-      final Response response =
-          await locator.get<GetPaginatedDataUseCase>().call(params);
+      final Response response = await _effectiveUseCase.call(params);
 
       // Verify request is still active
       if (currentRequestToken.isCancelled ||
@@ -107,19 +184,24 @@ extension PagyControllerLoader<T> on PagyController<T> {
         for (int i = 0; i < parsed.list.length; i++) {
           try {
             newItems.add(fromMap(parsed.list[i]));
-          } catch (e) {
+          } catch (e, stackTrace) {
             if (!kReleaseMode) {
-              pagyLog("Failed to parse item at index $i: $e");
+              pagyLog("Failed to parse item at index $i: $e\n$stackTrace");
             }
 
             // Only update state if request is still active
             if (cancelToken == currentRequestToken &&
                 !currentRequestToken.isCancelled) {
+              final parseError = PagyError.malformedResponse(
+                message:
+                    "Parsing error on item $i. Please check your model or keys.",
+                stackTrace: stackTrace,
+              );
               controller.value = state.copyWith(
                 isFetching: false,
                 isMoreFetching: false,
-                errorMessage:
-                    "Parsing error on item $i. Please check your model or keys.",
+                error: parseError,
+                errorMessage: parseError.message,
               );
             }
             return;
@@ -132,13 +214,25 @@ extension PagyControllerLoader<T> on PagyController<T> {
           if (refresh) itemsList.clear();
           itemsList.addAll(newItems);
 
+          final int resolvedTotalPages = _resolveTotalPages(
+            totalPages: parsed.totalPages,
+            totalItems: parsed.totalItems,
+            hasMore: parsed.hasMore,
+            currentPage: currentPage.toInt(),
+            pageSize: limit,
+            newItemsCount: newItems.length,
+            assumeHasMore:
+                PagyConfig().assumeHasMoreWhenTotalPagesNull,
+          );
+
           controller.value = state.copyWith(
             data: [...itemsList],
             currentPage: currentPage,
-            totalPages: parsed.totalPages ?? 1,
+            totalPages: resolvedTotalPages,
             isFetching: false,
             isMoreFetching: false,
             errorMessage: '',
+            clearError: true,
           );
         }
       } else {
@@ -158,10 +252,12 @@ extension PagyControllerLoader<T> on PagyController<T> {
             "API error: $e \n$stackTrace",
           );
         }
+        final pagyError = _toPagyError(e, stackTrace);
         controller.value = state.copyWith(
           isFetching: false,
           isMoreFetching: false,
-          errorMessage: e.toString(),
+          error: pagyError,
+          errorMessage: pagyError.message,
         );
       }
     }
@@ -177,7 +273,67 @@ extension PagyControllerLoader<T> on PagyController<T> {
   /// ```
   Future<void> retry() async {
     if (lastParams == null) return;
-    controller.value = controller.value.copyWith(errorMessage: null);
-    await loadData(refresh: controller.value.currentPage == 0);
+
+    final params = lastParams!;
+    final refresh = params['refresh'] as bool? ?? true;
+    final page = params['page'] as num?;
+    final queryParameter =
+        params['queryParameter'] as Map<String, dynamic>?;
+    final paginationMode = params['paginationMode'] as PaginationPayloadMode?;
+    final payloadData = params['payloadData'];
+
+    controller.value = controller.value.copyWith(
+      errorMessage: '',
+      clearError: true,
+    );
+    await loadData(
+      refresh: refresh,
+      queryParameter: queryParameter,
+      paginationMode: paginationMode,
+      payloadData: payloadData,
+      pageOverride: page,
+    );
   }
+}
+
+int _resolveTotalPages({
+  required int currentPage,
+  required int pageSize,
+  required int newItemsCount,
+  required bool assumeHasMore,
+  int? totalPages,
+  int? totalItems,
+  bool? hasMore,
+}) {
+  if (totalPages != null) return totalPages;
+  if (totalItems != null && pageSize > 0) {
+    return (totalItems / pageSize).ceil();
+  }
+  if (hasMore != null) {
+    return hasMore ? currentPage + 1 : currentPage;
+  }
+  if (assumeHasMore) {
+    return newItemsCount == 0 ? currentPage : currentPage + 1;
+  }
+  return currentPage;
+}
+
+PagyError _toPagyError(Object e, [StackTrace? stackTrace]) {
+  if (e is PagyError) {
+    return stackTrace != null ? e.copyWith(stackTrace: stackTrace) : e;
+  }
+  if (e is DioException) {
+    return PagyError.fromDioException(
+      e,
+      stackTrace: stackTrace,
+    );
+  }
+  if (e is String) {
+    return PagyError.unknown(message: e, stackTrace: stackTrace);
+  }
+  return PagyError.unknown(
+    message: e.toString(),
+    exception: e,
+    stackTrace: stackTrace,
+  );
 }

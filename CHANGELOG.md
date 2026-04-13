@@ -1,4 +1,68 @@
-## 1.0.2
+## 1.3.0
+
+### ✨ Features
+- **Stack Trace Support**: `PagyError` now captures and stores `StackTrace` for easier debugging. Accessed via `error.stackTrace`.
+- **Flexible Refresh**: Added custom refresh indicator support via `refreshIndicatorBuilder` and custom `onRefresh` logic.
+- **Persistence Control**: Added `preserveFiltersOnRefresh` (global config + per-call) and `clearFilters()` to manage filter state during refreshes.
+- **Clean Architecture**: Optional pathway with `PagyPageRepository` and `GetPaginatedPageUseCase`.
+
+### 🚀 Improvements
+- **Filtered State**: Filters are now persisted across `loadMore()` calls.
+- **Enhanced Logging**: Improved debug logging with stacktrace for API and parsing failures.
+- **Pagination Fallbacks**: Added support for `hasMore/totalItems` metadata and `PagyConfig.assumeHasMoreWhenTotalPagesNull`.
+- **Payload Reuse**: `PagyController` now reuses initial `payloadData` if per-call payload is omitted.
+- **Smart Formatting**: Avoid sending null `page`/`limit` params; clear `errorMessage` when error is fixed.
+
+### 🛠️ Bug Fixes
+- **Filter Persistence**: Changed `preserveFiltersOnRefresh` default to `true` to ensure pull-to-refresh keeps current filters.
+- **Retry Logic**: Fixed `PagyBuilder` and `PagyControllerLoader` to correctly preserve filters and state during manual retries.
+- **Initialization**: Fixed config race conditions where controllers could lock in an unconfigured state.
+- **Logic**: Fixed `loadMore()` to always fetch next page correctly.
+- **UI**: Relaxed shimmer placeholder requirements when custom `shimmerBuilder` is used.
+
+### 🧪 Testing
+- Added comprehensive unit tests for filter persistence, retry behavior, metadata fallbacks, and stacktrace handling.
+
+## 1.2.0
+
+### 🎯 Horizontal ListView & Dynamic Height Support
+
+- ✨ **New Widget**: Added `PagyHorizontalListView<T>` for horizontal scrolling pagination.
+- 📏 **Dynamic Height Support**: Added `useDynamicHeight` parameter for intrinsic sizing support.
+- 📐 **Column/Flex Layout Ready**: Height is automatically determined by content when `useDynamicHeight: true`.
+- 🏗️ **Smart Auto-Fallback**: Automatically detects unbounded height constraints and switches to dynamic layout - fixes "Horizontal viewport was given unbounded height" errors!
+- 🛡️ **PagyObserver Enhancements**: Added `nullBuilder` for custom null controller handling.
+- 🔄 **Feature Parity**: Full support for shimmers, error states, and empty states in horizontal mode.
+- 🎨 **Customizable Spacing**: Easy configuration of `itemSpacing` and `separatorBuilder`.
+- ⚠️ **Performance Note**: Dynamic height builds all items upfront (not lazy) - use with caution for very large lists.
+
+### Example Usage
+
+```dart
+// Fixed Height (Uses efficient ListView.separated)
+SizedBox(
+  height: 200,
+  child: PagyHorizontalListView<Category>(
+    controller: categoryController,
+    itemBuilderWithIndex: (context, category, index) {
+      return CategoryCard(category: category);
+    },
+    itemSpacing: 12,
+  ),
+)
+
+// Dynamic Height (Auto-sized to tallest child - perfect for Columns)
+PagyHorizontalListView<Product>(
+  controller: productController,
+  useDynamicHeight: true,
+  itemBuilderWithIndex: (context, product, index) {
+    return ProductCard(product: product);
+  },
+)
+```
+
+
+## 1.1.1
 
 ### 🎯 ItemBuilder Enhancement
 
@@ -7,10 +71,12 @@
 - 📝 **Backward Compatible**: Old `itemBuilder` (without index) still works but is deprecated
 - 🔄 **Automatic Migration**: Use `itemBuilderWithIndex: (context, item, index) => ...` instead of `itemBuilder: (context, item) => ...`
 
-## 1.0.1
+## 1.1.0
 
 ### 🎯 UX Improvements & New Features
 
+- 🔄 **Refresh on Empty**: Added support for pull-to-refresh when the list is empty
+- 💬 **Empty State Customization**: Added `emptyStateBuilder`, `emptyMessage`, and `emptyIcon` for comprehensive empty state customization
 - ✨ **Built-in Response Parsers**: Added `PagyParsers` class with pre-built parsers for common API response structures (Laravel, Django, etc.)
 - 🏷️ **Better Error Handling**: Introduced `PagyError` class with error types, helpful suggestions, and status codes
 - 📊 **Pagination Metadata**: Added `PagyMetadata` for easy access to pagination info in UI (`currentPage`, `totalPages`, `progress`, etc.)
@@ -40,7 +106,8 @@
 
 - Added POST request support and enhanced API interactions.
 - Improved `.gitignore`.
-- Updated dependencies.
+- Updated dependencies:
+  pagy: ^1.3.0
 
 ## 0.0.3+1
 

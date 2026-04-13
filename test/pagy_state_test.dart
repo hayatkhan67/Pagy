@@ -103,6 +103,18 @@ void main() {
       expect(newState.error!.type, PagyErrorType.serverError);
     });
 
+    test('copyWith clearError clears error and errorMessage', () {
+      final error = PagyError.network(message: 'Network error');
+      // ignore: deprecated_member_use_from_same_package
+      final state = PagyState<String>(error: error, errorMessage: 'Legacy');
+
+      final newState = state.copyWith(clearError: true);
+
+      expect(newState.error, isNull);
+      // ignore: deprecated_member_use_from_same_package
+      expect(newState.errorMessage, isNull);
+    });
+
     test('copyWith can clear error by omitting it', () {
       final error = PagyError.network(message: 'Test');
       final state = PagyState<String>(error: error);
