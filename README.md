@@ -1,5 +1,5 @@
 <p align="center">
-	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/beta/assets/logo.png" alt="Pagy Logo" width="200"/>
+	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/main/assets/logo.png" alt="Pagy Logo" width="200"/>
 </p>
 <p align="center">
 	<i>A powerful Flutter package for effortless API pagination with shimmer effects, error handling, and smooth scrolling</i>
@@ -44,7 +44,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pagy: ^1.2.1
+  pagy: ^1.2.2
 ```
 
 Then run:
@@ -182,7 +182,7 @@ class _ProductListScreenState extends State<ProductListScreen> {
 }
 ```
 
-> **💡 New in v1.2.1:** Persistence is now handled automatically. Filters are kept during retries and can optionally be kept during refreshes.
+> **💡 New in v1.2.2:** Persistence is now handled automatically. Filters are kept during retries and can optionally be kept during refreshes.
 
 ---
 
@@ -241,22 +241,63 @@ if (pagyController.controller.value.error != null) {
 ### 4. Clean Architecture Pathway
 
 Pagy now supports a more structured approach for enterprise apps using repositories and use cases.
+`PagyPageRepository` is an abstract class — use the built-in `PagyPageRepositoryImpl` or create your own implementation.
 
 ```dart
-// 1. Create your repository
-final repository = PagyPageRepository(
-  endPoint: "products",
-  fromMap: Product.fromJson,
-);
+// 1. Use the built-in repository implementation
+//    (PagyPageRepository is abstract — implement your own or use the default)
+final repository = PagyPageRepositoryImpl(remoteDataSource);
 
 // 2. Wrap in a Use Case (optional but recommended)
 final useCase = GetPaginatedPageUseCase(repository);
 
 // 3. Pass to Controller
 pagyController = PagyController(
-  useCase: useCase,
-  // ...other config
+  endPoint: "products",
+  fromMap: Product.fromJson,
+  responseParser: PagyParsers.dataWithPagination,
+  pageUseCase: useCase,
 );
+```
+
+### 5. Pagination Fallback Metadata
+
+Not all APIs return `totalPages`. Pagy supports multiple fallback strategies via `PagyResponseParser`:
+
+```dart
+responseParser: (response) => PagyResponseParser(
+  list: response['data'],
+  totalPages: response['total_pages'],   // Primary: explicit total
+  totalItems: response['total_count'],   // Fallback: computed from count
+  hasMore: response['has_more'],         // Fallback: boolean flag
+),
+```
+
+**Resolution order:** `totalPages` → `totalItems / pageSize` → `hasMore` → assume more (if configured).
+
+If your API provides none of these, enable the global fallback:
+
+```dart
+PagyConfig().initialize(
+  baseUrl: "...",
+  assumeHasMoreWhenTotalPagesNull: true, // Keep loading until an empty page
+);
+```
+
+### 6. Payload Reuse
+
+When using `payloadData` in the controller constructor (e.g., for POST requests), that payload is automatically reused for all subsequent `loadMore()` calls. You can override it per-call:
+
+```dart
+pagyController = PagyController(
+  endPoint: "orders",
+  requestType: PagyApiRequestType.post,
+  payloadData: {'user_id': 123}, // Reused on every loadData() / loadMore()
+  // ...
+);
+
+// Override for a specific call
+await pagyController.loadData(payloadData: {'user_id': 456});
 ```
 
 ---

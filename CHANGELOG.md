@@ -1,4 +1,4 @@
-## 1.2.2 (Unreleased)
+## 1.2.2
 
 ### ✨ Features
 - **Stack Trace Support**: `PagyError` now captures and stores `StackTrace` for easier debugging. Accessed via `error.stackTrace`.
