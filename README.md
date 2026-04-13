@@ -1,9 +1,6 @@
 <p align="center">
 	<img src="https://raw.githubusercontent.com/hayatkhan67/pagy/beta/assets/logo.png" alt="Pagy Logo" width="200"/>
 </p>
-
-<h1 align="center">Pagy</h1>
-
 <p align="center">
 	<i>A powerful Flutter package for effortless API pagination with shimmer effects, error handling, and smooth scrolling</i>
 </p>
