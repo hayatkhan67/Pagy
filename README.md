@@ -44,7 +44,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pagy: ^1.3.0
+  pagy: ^1.4.0
 ```
 
 Then run:
@@ -529,7 +529,95 @@ PagyObserver<Product>(
 )
 ```
 
----
+### 8. Controller Helpers — Manipulate Data Locally
+
+`PagyController` includes a full set of helpers to add, update, remove, or transform items
+**without re-fetching from the API**. Every change keeps the internal `PagyState` in sync
+so your UI rebuilds automatically.
+
+#### Quick Reference
+
+```dart
+controller.add(item);                      // append
+controller.add(item, position: InsertPosition.start); // prepend
+controller.addAll(items);                  // append many
+controller.insert(2, item);               // insert at index
+controller.update(0, newItem);             // update at index
+controller.updateWhere(                    // update matching items
+  where: (u) => u.id == id,
+  update: (u) => u.copyWith(name: 'New'),
+);
+controller.remove(where: (u) => u.isBlocked); // remove matching
+controller.removeAt(0);                    // remove at index
+controller.replace(                        // replace first match
+  where: (u) => u.id == id,
+  replacement: updatedUser,
+);
+controller.map((u) => u.copyWith(seen: true)); // transform all
+controller.where((u) => u.isActive);       // keep only matching
+controller.sort((a, b) => a.name.compareTo(b.name)); // sort
+controller.swap(0, 1);                    // swap two items
+controller.move(from: 3, to: 0);          // reorder (drag & drop)
+controller.batch((items) { ... });         // batch — single rebuild
+controller.setData(newList);               // replace entire dataset
+controller.clear();                        // clear items
+controller.reset();                        // clear + reset pagination
+```
+
+#### Upsert (Update or Insert)
+
+```dart
+controller.upsertWhere(
+  where: (u) => u.id == user.id,
+  update: (old) => old.copyWith(name: user.name),
+  item: user, // inserted if not found
+);
+```
+
+#### Query Helpers
+
+```dart
+if (controller.contains((u) => u.id == id)) { ... }
+final user = controller.firstWhereOrNull((u) => u.isAdmin);
+final idx  = controller.indexOf((u) => u.id == id);
+print('${controller.length} items loaded');
+print('Empty? ${controller.isEmpty}');
+```
+
+#### Batch Operations (Single Rebuild)
+
+When you need multiple changes at once, `batch()` applies them all and triggers
+only **one** UI rebuild:
+
+```dart
+controller.batch((items) {
+  items.removeWhere((u) => u.isBlocked);
+  items.insert(0, pinnedUser);
+  items.sort((a, b) => a.name.compareTo(b.name));
+});
+```
+
+#### Listening to Changes
+
+```dart
+final cancel = controller.onChange((items) {
+  print('${items.length} items');
+});
+
+// Later:
+cancel(); // stop listening
+```
+
+#### Real-World Example — BLoC with Multiple Controllers
+
+```dart
+// When a friend request is accepted, update multiple paginated lists at once:
+state.friendRequestsController?.remove(where: (u) => u.id == user.id);
+state.findFriendController?.updateWhere(
+  where: (u) => u.id == user.id,
+  update: (u) => u.copyWith(friendStatus: FriendStatus.accepted),
+);
+```
 
 ## 🎨 Customization
 
@@ -615,6 +703,22 @@ Version 1.0.0+ introduces better naming while maintaining backward compatibility
 - Alternating row colors
 - Position-based styling
 - Analytics tracking by position
+
+### Controller Helpers (v1.4.0+)
+
+| Old (Deprecated) | New (Recommended) |
+|------------------|-------------------|
+| `addItem()` | `add()` |
+| `addItems()` | `addAll()` |
+| `updateItemAt()` | `update()` |
+| `removeWhere()` | `remove(where:)` |
+| `insertAt()` | `insert()` |
+| `replaceWhere()` | `replace(where:, replacement:)` |
+| `mapItems()` | `map()` |
+| `updateData()` | `setData()` |
+| `listen()` | `onChange()` |
+| `listenWithCancel()` | `onChange()` |
+| `modifyDirect()` | `modifyState()` |
 
 ### Example Migration
 

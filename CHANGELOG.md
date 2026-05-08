@@ -1,3 +1,75 @@
+## 1.4.0
+
+### ✨ Redesigned Controller Helpers API
+
+Complete overhaul of `PagyControllerHelpers` with a cleaner, more intuitive API. All old methods are preserved as `@Deprecated` and delegate to the new implementations — **zero breaking changes**.
+
+#### New Methods
+
+| Category | Method | Description |
+|----------|--------|-------------|
+| **Adding** | `add()` | Add single item with `InsertPosition` enum |
+| **Adding** | `addAll()` | Add multiple items with `InsertPosition` enum |
+| **Adding** | `insert()` | Insert at specific index (safe) |
+| **Updating** | `update()` | Update item at index, returns success `bool` |
+| **Updating** | `updateWhere()` | Update matching items with `where`/`update` pattern, returns count |
+| **Removing** | `remove()` | Remove matching items with named `where:` param, returns count |
+| **Removing** | `removeAt()` | Remove at index, returns removed item or `null` |
+| **Replacing** | `replace()` | Replace first match with named params |
+| **Replacing** | `upsertWhere()` | Update if found, insert if not |
+| **Transforming** | `map()` | Transform all items |
+| **Transforming** | `where()` | Keep only matching items (in-place filter) |
+| **Transforming** | `sort()` | Sort items with comparator |
+| **Transforming** | `swap()` | Swap two items by index |
+| **Transforming** | `move()` | Move item from one index to another (drag-and-drop) |
+| **Querying** | `contains()` | Check if any item matches |
+| **Querying** | `firstWhereOrNull()` | Find first match or `null` |
+| **Querying** | `indexOf()` | Find index of first match |
+| **Batch** | `batch()` | Multiple operations → single UI rebuild |
+| **State** | `isEmpty` / `isNotEmpty` / `length` / `first` / `last` | Quick state inspection |
+| **Listening** | `onChange()` | Listen with auto-cancel callback |
+| **Data** | `setData()` | Replace entire dataset |
+| **Data** | `clear()` | Clear items (preserves pagination state) |
+| **Advanced** | `modifyState()` | Direct state modification |
+
+#### New `InsertPosition` Enum
+
+Replaces the confusing `atStart` boolean with a self-documenting enum:
+
+```dart
+// Before (still works, deprecated):
+controller.addItem(user, atStart: true);
+
+// After:
+controller.add(user, position: InsertPosition.start);
+```
+
+### 🚫 Deprecated Methods (backward compatible)
+
+All old helpers now delegate to the new API and show deprecation warnings:
+
+| Old (Deprecated) | New (Recommended) |
+|------------------|-------------------|
+| `listen()` | `onChange()` |
+| `listenWithCancel()` | `onChange()` |
+| `updateData()` | `setData()` |
+| `addItem()` | `add()` |
+| `addItems()` | `addAll()` |
+| `updateItemAt()` | `update()` |
+| `removeWhere()` | `remove(where:)` |
+| `insertAt()` | `insert()` |
+| `replaceWhere()` | `replace(where:, replacement:)` |
+| `mapItems()` | `map()` |
+| `modifyDirect()` | `modifyState()` |
+
+### 🚀 Improvements
+
+- **Return values**: `update()`, `remove()`, `removeAt()`, `replace()`, `swap()`, `move()` return success/count for better control flow.
+- **Named parameters**: `remove(where:)`, `replace(where:, replacement:)`, `updateWhere(where:, update:)` are self-documenting.
+- **Batch operations**: `batch()` allows multiple list mutations with a single UI rebuild.
+- **Query helpers**: `contains()`, `firstWhereOrNull()`, `indexOf()` for quick lookups without `.items`.
+- **Comprehensive docs**: Every method includes dartdoc with usage examples.
+
 ## 1.3.0
 
 ### ✨ Features

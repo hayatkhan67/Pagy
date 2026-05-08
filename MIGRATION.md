@@ -124,6 +124,106 @@ PagyListView<Product>(
 
 ---
 
+### Controller Helpers (v1.4.0+)
+
+The helper methods on `PagyController` have been renamed for clarity and consistency. All old methods still work and delegate to the new implementations.
+
+| Old Name | New Name | Why |
+|----------|----------|-----|
+| `addItem()` | `add()` | Shorter, uses `InsertPosition` enum |
+| `addItems()` | `addAll()` | Consistent with Dart `List` naming |
+| `updateItemAt()` | `update()` | Shorter |
+| `removeWhere()` | `remove(where:)` | Named param is self-documenting |
+| `insertAt()` | `insert()` | Consistent with `List.insert` |
+| `replaceWhere()` | `replace(where:, replacement:)` | Named params |
+| `mapItems()` | `map()` | Matches `Iterable.map` |
+| `updateData()` | `setData()` | Clearer intent |
+| `listen()` | `onChange()` | Returns cancel callback |
+| `listenWithCancel()` | `onChange()` | Same, better name |
+| `modifyDirect()` | `modifyState()` | Describes what it modifies |
+
+#### Example Migration
+
+**Before (v1.3.x — still works):**
+```dart
+// Adding items
+controller.addItem(user, atStart: true);
+controller.addItems(users, atStart: false);
+
+// Updating items
+controller.updateItemAt(0, updatedUser);
+controller.mapItems((u) => u.copyWith(isOnline: false));
+
+// Removing items
+controller.removeWhere((u) => u.id == userId);
+
+// Replacing items
+controller.replaceWhere((u) => u.id == userId, updatedUser);
+
+// Listening
+controller.listen((items) => print(items.length));
+```
+
+**After (v1.4.0 — recommended):**
+```dart
+// Adding items
+controller.add(user, position: InsertPosition.start);
+controller.addAll(users);
+
+// Updating items
+controller.update(0, updatedUser);
+controller.map((u) => u.copyWith(isOnline: false));
+
+// Removing items — now returns count!
+final removedCount = controller.remove(where: (u) => u.id == userId);
+
+// Replacing items
+controller.replace(where: (u) => u.id == userId, replacement: updatedUser);
+
+// Listening — now returns cancel callback!
+final cancel = controller.onChange((items) => print(items.length));
+cancel(); // cleanup
+```
+
+#### New Methods (no old equivalent)
+
+These are entirely new — no migration needed:
+
+```dart
+// Update matching items with a transform function
+controller.updateWhere(
+  where: (u) => u.id == userId,
+  update: (u) => u.copyWith(status: 'active'),
+);
+
+// Upsert — update if exists, insert if not
+controller.upsertWhere(
+  where: (u) => u.id == user.id,
+  update: (old) => old.copyWith(name: user.name),
+  item: user,
+);
+
+// Batch — multiple changes, single rebuild
+controller.batch((items) {
+  items.removeWhere((u) => u.isBlocked);
+  items.sort((a, b) => a.name.compareTo(b.name));
+});
+
+// Query
+final admin = controller.firstWhereOrNull((u) => u.isAdmin);
+final exists = controller.contains((u) => u.id == userId);
+
+// Reordering
+controller.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+controller.swap(0, 1);
+controller.move(from: 3, to: 0);
+
+// State inspection
+print(controller.isEmpty);
+print(controller.length);
+print(controller.first);
+```
+
 ## New Features in 1.0.0
 
 ### 1. Built-in Response Parsers
