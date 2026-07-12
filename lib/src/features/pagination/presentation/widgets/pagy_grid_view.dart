@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import '../controllers/pagy_controller.dart';
+import 'common/pagy_shimmer.dart';
 import 'pagy_base_view.dart';
 
 /// {@template pagy_grid_view}
@@ -29,6 +30,8 @@ import 'pagy_base_view.dart';
 /// - Flexible grid configuration:
 ///   - `crossAxisCount` for column count
 ///   - `crossAxisSpacing` & `mainAxisSpacing` for spacing
+///   - `gridDelegate` for the full masonry layout surface (e.g. responsive
+///     columns via `SliverSimpleGridDelegateWithMaxCrossAxisExtent`)
 /// - Scroll control:
 ///   - `shrinkWrap`
 ///   - `disableScrolling`
@@ -70,6 +73,31 @@ class PagyGridView<T> extends PagyBaseView<T> {
   /// Defaults to `10.0`.
   final double mainAxisSpacing;
 
+  /// Full control over how children are distributed across the cross axis.
+  ///
+  /// Leave this `null` (the default) to lay out [crossAxisCount] equal columns.
+  /// Provide a delegate to reach the rest of the masonry layout options —
+  /// [crossAxisCount] is then ignored, while [crossAxisSpacing] and
+  /// [mainAxisSpacing] still apply.
+  ///
+  /// Responsive columns sized by available width:
+  /// ```dart
+  /// PagyGridView<Photo>(
+  ///   controller: controller,
+  ///   gridDelegate: const SliverSimpleGridDelegateWithMaxCrossAxisExtent(
+  ///     maxCrossAxisExtent: 180,
+  ///   ),
+  ///   itemBuilderWithIndex: (context, photo, i) => PhotoTile(photo: photo),
+  /// )
+  /// ```
+  ///
+  /// Both [SliverSimpleGridDelegateWithFixedCrossAxisCount] and
+  /// [SliverSimpleGridDelegateWithMaxCrossAxisExtent] are re-exported by
+  /// `package:pagy/pagy.dart`, so you don't need to depend on
+  /// `flutter_staggered_grid_view` directly. Custom [SliverSimpleGridDelegate]
+  /// subclasses work too.
+  final SliverSimpleGridDelegate? gridDelegate;
+
   /// Creates a new [PagyGridView].
   ///
   /// Requires:
@@ -105,32 +133,83 @@ class PagyGridView<T> extends PagyBaseView<T> {
     this.crossAxisCount = 2,
     this.crossAxisSpacing = 9,
     this.mainAxisSpacing = 10,
+    this.gridDelegate,
   }) : assert(
           placeholderItemModel != null || shimmerEffect == false,
           'PagyGridView: shimmerEffect is true but placeholderItemModel is null. '
           'Provide a placeholderItemModel when enabling shimmer placeholders.',
         );
 
+  /// The grid renders its footer as a full-width sliver below the columns.
+  @override
+  bool get separateFooter => true;
+
+  /// The effective cross-axis layout: an explicit [gridDelegate] if given,
+  /// otherwise [crossAxisCount] equal columns.
+  SliverSimpleGridDelegate get _effectiveGridDelegate =>
+      gridDelegate ??
+      SliverSimpleGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+      );
+
+  EdgeInsetsGeometry get _effectivePadding =>
+      padding ?? const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 16);
+
+  /// The shimmer has no paging footer, so it keeps the plain [MasonryGridView]
+  /// rather than the sliver layout [buildLayout] uses for real data.
+  @override
+  Widget buildShimmer(BuildContext context) {
+    return PagyShimmer<T>(
+      count: placeholderItemCount,
+      itemBuilder: (c, index) {
+        if (itemBuilderWithIndex != null) {
+          return itemBuilderWithIndex!(c, placeholderItemModel as T, index);
+        }
+        // ignore: deprecated_member_use_from_same_package
+        return itemBuilder!(c, placeholderItemModel as T);
+      },
+      layoutBuilder: (childBuilder) => MasonryGridView.builder(
+        shrinkWrap: shrinkWrap,
+        physics: disableScrolling
+            ? const NeverScrollableScrollPhysics()
+            : scrollPhysics,
+        padding: _effectivePadding,
+        gridDelegate: _effectiveGridDelegate,
+        crossAxisSpacing: crossAxisSpacing,
+        mainAxisSpacing: mainAxisSpacing,
+        itemCount: placeholderItemCount,
+        itemBuilder: childBuilder,
+      ),
+    );
+  }
+
   @override
   Widget buildLayout(
     BuildContext context,
     int itemCount,
-    Widget Function(BuildContext, int) itemBuilderFn,
-  ) {
-    return MasonryGridView.builder(
+    Widget Function(BuildContext, int) itemBuilderFn, {
+    Widget? footer,
+  }) {
+    return CustomScrollView(
       shrinkWrap: shrinkWrap,
       physics: disableScrolling
           ? const NeverScrollableScrollPhysics()
           : scrollPhysics,
-      padding: padding ??
-          const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 16),
-      gridDelegate: SliverSimpleGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: crossAxisCount,
-      ),
-      crossAxisSpacing: crossAxisSpacing,
-      mainAxisSpacing: mainAxisSpacing,
-      itemCount: itemCount,
-      itemBuilder: itemBuilderFn,
+      slivers: [
+        SliverPadding(
+          padding: _effectivePadding,
+          sliver: SliverMasonryGrid(
+            gridDelegate: _effectiveGridDelegate,
+            crossAxisSpacing: crossAxisSpacing,
+            mainAxisSpacing: mainAxisSpacing,
+            delegate: SliverChildBuilderDelegate(
+              itemBuilderFn,
+              childCount: itemCount,
+            ),
+          ),
+        ),
+        if (footer != null) SliverToBoxAdapter(child: footer),
+      ],
     );
   }
 }

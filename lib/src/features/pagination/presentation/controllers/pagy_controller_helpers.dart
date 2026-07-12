@@ -67,27 +67,27 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   ///   showEmptyState();
   /// }
   /// ```
-  bool get isEmpty => itemsList.isEmpty;
+  bool get isEmpty => _items.isEmpty;
 
   /// Whether the items list is not empty.
-  bool get isNotEmpty => itemsList.isNotEmpty;
+  bool get isNotEmpty => _items.isNotEmpty;
 
   /// The number of items currently loaded.
   ///
   /// ```dart
   /// Text('${controller.length} items loaded');
   /// ```
-  int get length => itemsList.length;
+  int get length => _items.length;
 
   /// The first item in the list, or `null` if empty.
   ///
   /// ```dart
   /// final newest = controller.first;
   /// ```
-  T? get first => itemsList.isEmpty ? null : itemsList.first;
+  T? get first => _items.isEmpty ? null : _items.first;
 
   /// The last item in the list, or `null` if empty.
-  T? get last => itemsList.isEmpty ? null : itemsList.last;
+  T? get last => _items.isEmpty ? null : _items.last;
 
   // ===========================================================================
   // ➕ Adding Items
@@ -109,9 +109,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   void add(T item, {InsertPosition position = InsertPosition.end}) {
     switch (position) {
       case InsertPosition.start:
-        itemsList.insert(0, item);
+        _items.insert(0, item);
       case InsertPosition.end:
-        itemsList.add(item);
+        _items.add(item);
     }
     _emit();
   }
@@ -126,9 +126,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   void addAll(List<T> items, {InsertPosition position = InsertPosition.end}) {
     switch (position) {
       case InsertPosition.start:
-        itemsList.insertAll(0, items);
+        _items.insertAll(0, items);
       case InsertPosition.end:
-        itemsList.addAll(items);
+        _items.addAll(items);
     }
     _emit();
   }
@@ -141,10 +141,10 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.insert(2, pinnedItem);
   /// ```
   void insert(int index, T item) {
-    if (index < 0 || index > itemsList.length) {
-      itemsList.add(item);
+    if (index < 0 || index > _items.length) {
+      _items.add(item);
     } else {
-      itemsList.insert(index, item);
+      _items.insert(index, item);
     }
     _emit();
   }
@@ -183,9 +183,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
     bool firstOnly = false,
   }) {
     int count = 0;
-    for (int i = 0; i < itemsList.length; i++) {
-      if (where(itemsList[i])) {
-        itemsList[i] = update(itemsList[i]);
+    for (int i = 0; i < _items.length; i++) {
+      if (where(_items[i])) {
+        _items[i] = update(_items[i]);
         count++;
         if (firstOnly) break;
       }
@@ -202,8 +202,8 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.update(0, updatedHeader);
   /// ```
   bool update(int index, T item) {
-    if (index >= 0 && index < itemsList.length) {
-      itemsList[index] = item;
+    if (index >= 0 && index < _items.length) {
+      _items[index] = item;
       _emit();
       return true;
     }
@@ -229,9 +229,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.remove(where: (user) => user.id == targetId);
   /// ```
   int remove({required bool Function(T item) where}) {
-    final before = itemsList.length;
-    itemsList.removeWhere(where);
-    final removedCount = before - itemsList.length;
+    final before = _items.length;
+    _items.removeWhere(where);
+    final removedCount = before - _items.length;
     if (removedCount > 0) _emit();
     return removedCount;
   }
@@ -244,8 +244,8 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// final removed = controller.removeAt(0);
   /// ```
   T? removeAt(int index) {
-    if (index >= 0 && index < itemsList.length) {
-      final item = itemsList.removeAt(index);
+    if (index >= 0 && index < _items.length) {
+      final item = _items.removeAt(index);
       _emit();
       return item;
     }
@@ -270,9 +270,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
     required bool Function(T item) where,
     required T replacement,
   }) {
-    final index = itemsList.indexWhere(where);
+    final index = _items.indexWhere(where);
     if (index != -1) {
-      itemsList[index] = replacement;
+      _items[index] = replacement;
       _emit();
       return true;
     }
@@ -300,9 +300,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
     required T item,
     InsertPosition position = InsertPosition.end,
   }) {
-    final index = itemsList.indexWhere(where);
+    final index = _items.indexWhere(where);
     if (index != -1) {
-      itemsList[index] = update(itemsList[index]);
+      _items[index] = update(_items[index]);
       _emit();
       return true;
     } else {
@@ -331,8 +331,8 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// );
   /// ```
   void map(T Function(T item) transform) {
-    final updated = itemsList.map(transform).toList();
-    itemsList
+    final updated = _items.map(transform).toList();
+    _items
       ..clear()
       ..addAll(updated);
     _emit();
@@ -349,9 +349,9 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.where((user) => user.isActive);
   /// ```
   int where(bool Function(T item) test) {
-    final before = itemsList.length;
-    itemsList.retainWhere(test);
-    final removedCount = before - itemsList.length;
+    final before = _items.length;
+    _items.retainWhere(test);
+    final removedCount = before - _items.length;
     if (removedCount > 0) _emit();
     return removedCount;
   }
@@ -366,7 +366,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.sort((a, b) => b.createdAt.compareTo(a.createdAt));
   /// ```
   void sort(int Function(T a, T b) compare) {
-    itemsList.sort(compare);
+    _items.sort(compare);
     _emit();
   }
 
@@ -380,13 +380,13 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   bool swap(int indexA, int indexB) {
     if (indexA < 0 ||
         indexB < 0 ||
-        indexA >= itemsList.length ||
-        indexB >= itemsList.length) {
+        indexA >= _items.length ||
+        indexB >= _items.length) {
       return false;
     }
-    final temp = itemsList[indexA];
-    itemsList[indexA] = itemsList[indexB];
-    itemsList[indexB] = temp;
+    final temp = _items[indexA];
+    _items[indexA] = _items[indexB];
+    _items[indexB] = temp;
     _emit();
     return true;
   }
@@ -403,12 +403,12 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   bool move({required int from, required int to}) {
     if (from < 0 ||
         to < 0 ||
-        from >= itemsList.length ||
-        to >= itemsList.length) {
+        from >= _items.length ||
+        to >= _items.length) {
       return false;
     }
-    final item = itemsList.removeAt(from);
-    itemsList.insert(to, item);
+    final item = _items.removeAt(from);
+    _items.insert(to, item);
     _emit();
     return true;
   }
@@ -425,7 +425,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// }
   /// ```
   bool contains(bool Function(T item) test) {
-    return itemsList.any(test);
+    return _items.any(test);
   }
 
   /// Returns the first item matching [test], or `null` if none found.
@@ -434,7 +434,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// final admin = controller.firstWhereOrNull((u) => u.isAdmin);
   /// ```
   T? firstWhereOrNull(bool Function(T item) test) {
-    for (final item in itemsList) {
+    for (final item in _items) {
       if (test(item)) return item;
     }
     return null;
@@ -449,7 +449,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// }
   /// ```
   int indexOf(bool Function(T item) test) {
-    return itemsList.indexWhere(test);
+    return _items.indexWhere(test);
   }
 
   // ===========================================================================
@@ -475,7 +475,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// });
   /// ```
   void batch(void Function(List<T> items) operations) {
-    operations(itemsList);
+    operations(_items);
     _emit();
   }
 
@@ -496,7 +496,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// cancel();
   /// ```
   VoidCallback onChange(void Function(List<T> items) onChanged) {
-    void listener() => onChanged(List<T>.from(itemsList));
+    void listener() => onChanged(List<T>.from(_items));
     controller.addListener(listener);
     return () => controller.removeListener(listener);
   }
@@ -513,7 +513,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.clear();
   /// ```
   void clear() {
-    itemsList.clear();
+    _items.clear();
     _emit();
   }
 
@@ -523,7 +523,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.setData(filteredUsers);
   /// ```
   void setData(List<T> newData) {
-    itemsList
+    _items
       ..clear()
       ..addAll(newData);
     _emit();
@@ -542,7 +542,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
 
   /// Internal helper to reset items and pagination state.
   void _clearItems() {
-    itemsList.clear();
+    _items.clear();
     controller.value = controller.value.copyWith(
       data: [],
       currentPage: 0,
@@ -568,7 +568,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// ```
   void modifyState(ValueUpdater<PagyState<T>> updater) {
     final updated = updater(controller.value);
-    itemsList
+    _items
       ..clear()
       ..addAll(updated.data);
     controller.value = updated;
@@ -584,7 +584,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
 
   /// Internal helper to emit the current list and update [PagyState].
   void _emit() {
-    controller.value = controller.value.copyWith(data: [...itemsList]);
+    controller.value = controller.value.copyWith(data: [..._items]);
   }
 
   // ===========================================================================
@@ -605,7 +605,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   @Deprecated('Use onChange() instead. Will be removed in v2.0.0')
   void listen(void Function(List<T> items) onChanged) {
     controller.addListener(() {
-      onChanged(List<T>.from(itemsList));
+      onChanged(List<T>.from(_items));
     });
   }
 

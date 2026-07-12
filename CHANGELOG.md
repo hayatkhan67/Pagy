@@ -1,3 +1,78 @@
+## 1.5.0
+
+A correctness and polish release. No breaking API changes, but two runtime behaviors change — see **Changed** below.
+
+### 🐛 Fixed
+
+#### Error classification was broken on the default code path
+
+The headline fix. `NetworkApiService` threw a bare `String` on failure, destroying the
+original `DioException` before it reached the controller. Every error — timeout, `401`,
+`500`, no connectivity — collapsed into `PagyError.unknown` with a null `statusCode`,
+making `PagyErrorType` and its per-type suggestions effectively unreachable unless you
+had opted into the Clean Architecture page use case.
+
+Errors are now classified properly, and `error.type`, `error.statusCode`,
+`error.suggestion`, and `error.originalException` all reach your `errorBuilder`. The
+server's own message is preserved as `error.message`.
+
+```dart
+errorBuilder: (error, onRetry) {
+  if (error.type == PagyErrorType.unauthorized) return LoginPrompt();
+  return ErrorView(message: error.message, hint: error.suggestion, onRetry: onRetry);
+}
+```
+
+#### Other fixes
+
+| Fix | Detail |
+|---|---|
+| **Failed refresh no longer desyncs state** | `refresh()` cleared the item list *before* the request. On failure the UI still showed the old items while `controller.items` was empty, and the next helper call collapsed the visible list. The list is now cleared only once new data arrives. |
+| **Duplicate load-more requests** | Two scroll notifications in one frame both fired a request; the second cancelled the first and refetched the same page. `loadData` now ignores a load-more while one is in flight. |
+| **`ApiException` crash on non-string `message`** | A response like `{"message": {"en": "..."}}` threw a `TypeError` *inside* the error handler. Non-string messages now fall back to the type-based message. |
+| **Inline shimmer crash** | Using `PagyBuilder` directly with a `shimmerBuilder` but no `placeholderItemModel` threw on load-more. It now falls back to the loader. |
+| **Inconsistent "nothing loaded" state** | `reset()` reported `currentPage: 0` while a fresh controller reported `1`, so a never-loaded controller claimed `isLastPage == true`. Standardized on `0`. |
+| **`headers` typing** | Was `dynamic` while `NetworkApiService` required `Map<String, String>?`, so `{'X-Foo': 1}` compiled and crashed at runtime. Now typed. |
+| **Docs & typo** | `preserveFiltersOnRefresh` documented as defaulting to `false` when it is `true`; typo in the trailing-slash warning. |
+
+### 🔄 Changed
+
+**`limit` now defaults to `10`** (was `4`). If you never passed `limit`, your pages just got bigger. Pass `limit: 4` to keep the old size.
+
+**`PagyParsers.simpleList` reads `total` as an item count, not a page count.** In the wild `{"data": [...], "total": 100}` almost always means 100 *items*. Pagy now derives the page count from `total` and your `limit`. If your API really does put a page count in `total`, switch to `PagyParsers.customKey(response, itemKey: 'data', totalKey: 'total')`.
+
+Also changed:
+
+- **Pull-to-refresh keeps your list on screen.** Previously the whole list was swapped for the shimmer/loader. The full-screen loading state is now shown only when there is nothing to display.
+- **`assumeHasMoreWhenTotalPagesNull` stops at a short page.** A page returning fewer items than `limit` is treated as the last page, eliminating the guaranteed trailing empty request.
+- **`PagyGridView`'s inline loader and error span the full width.** They previously rendered inside a single masonry cell, which looked broken with two or more columns. The data layout now builds on `CustomScrollView` + `SliverMasonryGrid` so the footer can be a full-width sliver. The shimmer placeholder layout has no footer and keeps using `MasonryGridView` unchanged.
+
+### ➕ Added
+
+- **`PagyGridView.gridDelegate`** — opt into the full masonry layout surface when the fixed-column default isn't enough. Omit it and nothing changes; supply one and `crossAxisCount` gives way to it while spacing still applies.
+
+  ```dart
+  PagyGridView<Photo>(
+    controller: controller,
+    // As many columns as fit, each at most 180px wide.
+    gridDelegate: const SliverSimpleGridDelegateWithMaxCrossAxisExtent(
+      maxCrossAxisExtent: 180,
+    ),
+    itemBuilderWithIndex: (context, photo, i) => PhotoTile(photo: photo),
+  )
+  ```
+
+  `SliverSimpleGridDelegate` and both built-in delegates are re-exported from `package:pagy/pagy.dart`, so you don't need a direct dependency on `flutter_staggered_grid_view`. Custom subclasses work too, and the paging footer stays full-width regardless.
+
+- **`PagyConfig().reset()`** — restores every setting to its default and allows `initialize()` to run again. Useful for tests and for re-login flows that swap the base URL or token.
+- Calling `initialize()` more than once now logs a warning instead of silently doing nothing.
+
+### ⚠️ Deprecated
+
+- **`PagyController.itemsList`** — mutating it bypasses state emission and silently desyncs the UI. Read via `items`; mutate via the helper methods (`add`, `remove`, `updateWhere`, `batch`, …). Removal in v2.0.0.
+
+---
+
 ## 1.4.0
 
 ### ✨ Redesigned Controller Helpers API

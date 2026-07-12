@@ -58,6 +58,10 @@ extension PagyControllerLoader<T> on PagyController<T> {
 
     final state = controller.value;
 
+    // Ignore duplicate load-more calls (rapid scroll notifications) before the
+    // in-flight request gets cancelled below.
+    if (!refresh && state.isMoreFetching) return;
+
     // Check pagination bounds for non-refresh requests
     final num currentPage =
         pageOverride ?? (refresh ? 1 : state.currentPage + 1);
@@ -124,8 +128,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
           return;
         }
 
-        if (refresh) itemsList.clear();
-        itemsList.addAll(page.items);
+        if (refresh) _items.clear();
+        _items.addAll(page.items);
 
         final int resolvedTotalPages = _resolveTotalPages(
           totalPages: page.totalPages,
@@ -138,8 +142,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
               PagyConfig().assumeHasMoreWhenTotalPagesNull,
         );
 
-        controller.value = state.copyWith(
-          data: [...itemsList],
+        controller.value = controller.value.copyWith(
+          data: [..._items],
           currentPage: currentPage,
           totalPages: resolvedTotalPages,
           isFetching: false,
@@ -197,7 +201,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
                     "Parsing error on item $i. Please check your model or keys.",
                 stackTrace: stackTrace,
               );
-              controller.value = state.copyWith(
+              controller.value = controller.value.copyWith(
                 isFetching: false,
                 isMoreFetching: false,
                 error: parseError,
@@ -211,8 +215,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
         // Final validation and state update
         if (cancelToken == currentRequestToken &&
             !currentRequestToken.isCancelled) {
-          if (refresh) itemsList.clear();
-          itemsList.addAll(newItems);
+          if (refresh) _items.clear();
+          _items.addAll(newItems);
 
           final int resolvedTotalPages = _resolveTotalPages(
             totalPages: parsed.totalPages,
@@ -225,8 +229,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
                 PagyConfig().assumeHasMoreWhenTotalPagesNull,
           );
 
-          controller.value = state.copyWith(
-            data: [...itemsList],
+          controller.value = controller.value.copyWith(
+            data: [..._items],
             currentPage: currentPage,
             totalPages: resolvedTotalPages,
             isFetching: false,
@@ -239,8 +243,12 @@ extension PagyControllerLoader<T> on PagyController<T> {
         throw Exception("Empty or invalid response from server.");
       }
     } catch (e, stackTrace) {
-      // Handle cancellation
+      // Handle cancellation, whether it surfaced as a raw DioException or was
+      // already classified into a PagyError further down the stack.
       if (e is DioException && CancelToken.isCancel(e)) {
+        return;
+      }
+      if (e is PagyError && e.type == PagyErrorType.cancelled) {
         return;
       }
 
@@ -253,7 +261,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
           );
         }
         final pagyError = _toPagyError(e, stackTrace);
-        controller.value = state.copyWith(
+        controller.value = controller.value.copyWith(
           isFetching: false,
           isMoreFetching: false,
           error: pagyError,
@@ -313,7 +321,10 @@ int _resolveTotalPages({
     return hasMore ? currentPage + 1 : currentPage;
   }
   if (assumeHasMore) {
-    return newItemsCount == 0 ? currentPage : currentPage + 1;
+    // A short page means the server has nothing left to give.
+    final bool exhausted =
+        newItemsCount == 0 || (pageSize > 0 && newItemsCount < pageSize);
+    return exhausted ? currentPage : currentPage + 1;
   }
   return currentPage;
 }

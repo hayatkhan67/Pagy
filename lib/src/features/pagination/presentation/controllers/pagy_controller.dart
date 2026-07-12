@@ -77,7 +77,7 @@ class PagyController<T> {
   /// Example: `{ 'sort': 'latest', 'category': 'books' }`
   final Map<String, dynamic>? query;
 
-  /// Number of items to fetch per page (default: `4`).
+  /// Number of items to fetch per page (default: `10`).
   final int limit;
 
   /// Internal filter object for persisting last applied filters.
@@ -127,12 +127,19 @@ class PagyController<T> {
   Map<String, dynamic>? lastParams;
 
   /// Internal storage of fetched items.
+  final List<T> _items = [];
+
+  /// Direct, mutable access to the internal item list.
   ///
-  /// Use [items] for a read-only view.
-  final List<T> itemsList = [];
+  /// **Deprecated:** Mutating this list bypasses state emission, so the UI
+  /// silently falls out of sync. Read via [items]; mutate via the helper
+  /// methods (`add`, `remove`, `updateWhere`, `batch`, …).
+  @Deprecated('Read via items; mutate via the helper methods. '
+      'Will be removed in v2.0.0')
+  List<T> get itemsList => _items;
 
   /// Read-only, unmodifiable view of the current items list.
-  List<T> get items => List.unmodifiable(itemsList);
+  List<T> get items => List.unmodifiable(_items);
 
   /// Current pagination state exposed from [controller].
   ///
@@ -184,7 +191,7 @@ class PagyController<T> {
     this.token,
     @Deprecated('Use query instead') this.additionalQueryParams,
     this.query,
-    this.limit = 4,
+    this.limit = 10,
     @Deprecated('Use payloadMode instead') this.paginationMode,
     this.payloadMode,
     this.payloadData,
@@ -222,8 +229,9 @@ class PagyController<T> {
   ///   child: PagyListView(...),
   /// )
   /// ```
+  /// The list is cleared only once the new page arrives, so a failed refresh
+  /// leaves the previously loaded items on screen.
   Future<void> refresh({bool? preserveFilters}) async {
-    itemsList.clear();
     await loadData(preserveFiltersOnRefresh: preserveFilters);
   }
 
@@ -233,8 +241,9 @@ class PagyController<T> {
   /// ```dart
   /// controller.applyFilters({'category': 'electronics', 'price_max': 500});
   /// ```
+  /// Note: [filters] *replaces* any previously applied filter map; it is not
+  /// merged into it.
   Future<void> applyFilters(Map<String, dynamic> filters) async {
-    itemsList.clear();
     await loadData(queryParameter: filters);
   }
 
@@ -247,7 +256,6 @@ class PagyController<T> {
   /// controller.search('laptop', searchKey: 'query');
   /// ```
   Future<void> search(String query, {String searchKey = 'q'}) async {
-    itemsList.clear();
     await loadData(queryParameter: {searchKey: query});
   }
 
@@ -257,7 +265,6 @@ class PagyController<T> {
   Future<void> clearFilters({bool refresh = true}) async {
     filter = null;
     if (refresh) {
-      itemsList.clear();
       await loadData(preserveFiltersOnRefresh: false);
     }
   }
@@ -286,7 +293,7 @@ class PagyController<T> {
         currentPage: state.currentPage.toInt(),
         totalPages: state.totalPages.toInt(),
         itemsPerPage: limit,
-        loadedItems: itemsList.length,
+        loadedItems: _items.length,
       );
 
   // ---------------------------------------------------------------------------

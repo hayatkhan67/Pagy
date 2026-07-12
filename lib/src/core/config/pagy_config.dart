@@ -60,7 +60,8 @@ class PagyConfig {
 
   /// Whether refresh calls should preserve existing filters by default.
   ///
-  /// Defaults to `false` to preserve previous behavior.
+  /// Defaults to `true`, so a pull-to-refresh keeps the filters the user
+  /// already applied. Pass `false` to [initialize] to have refresh clear them.
   bool preserveFiltersOnRefresh = true;
 
   /// Whether to assume more pages exist when totalPages is missing.
@@ -146,7 +147,9 @@ class PagyConfig {
   ///
   /// Must be called **once** before using any Pagy controllers.
   ///
-  /// If already initialized, calling this method again has no effect.
+  /// Calling this again has no effect and logs a warning. To reconfigure —
+  /// after a login that changes the base URL or token, or between tests —
+  /// call [reset] first.
   void initialize({
     String? baseUrl,
     BaseOptions? baseOptions,
@@ -170,7 +173,15 @@ class PagyConfig {
     Interceptor? interceptor,
     PagyLogger? customLogger,
   }) {
-    if (_initialized) return; // prevent duplicate init
+    if (_initialized) {
+      logger(
+        '⚠️  PagyConfig().initialize() was called more than once. '
+        'The new configuration was ignored.\n'
+        'Call PagyConfig().reset() first if you need to reconfigure.',
+        name: 'Pagy Warning',
+      );
+      return;
+    }
 
     // Runtime validation (asserts are stripped in release)
     if (baseUrl != null && baseOptions != null) {
@@ -213,7 +224,7 @@ class PagyConfig {
           '⚠️  baseUrl should typically end with / for proper endpoint concatenation\n'
           'Current: "$baseUrl"\n'
           'Recommended: "$baseUrl/"\n'
-          'This may cause issues if your endpoints don\' start with /',
+          'This may cause issues if your endpoints don\'t start with /',
           name: 'Pagy Warning',
         );
       }
@@ -288,6 +299,42 @@ class PagyConfig {
         name: 'Pagy Init',
       );
     }
+  }
+
+  /// Restores every setting to its default and allows [initialize] to run
+  /// again.
+  ///
+  /// Intended for tests and for re-login flows that need to swap the base URL,
+  /// token, or interceptor.
+  ///
+  /// Existing [PagyController] instances keep their own endpoint and token, but
+  /// will pick up the new network client on their next request.
+  void reset() {
+    baseUrl = '';
+    baseOptions = null;
+    pageKey = 'page';
+    limitKey = null;
+    scrollOffset = 200;
+    preserveFiltersOnRefresh = true;
+    assumeHasMoreWhenTotalPagesNull = false;
+    enableLogs = true;
+    // ignore: deprecated_member_use_from_same_package
+    apiLogs = true;
+    payloadMode = PaginationPayloadMode.queryParams;
+    // ignore: deprecated_member_use_from_same_package
+    paginationMode = PaginationPayloadMode.queryParams;
+    dioInterceptor = null;
+    globalErrorBuilder = null;
+    globalEmptyBuilder = null;
+    globalEmptyMessage = 'No data available';
+    globalEmptyIcon = null;
+    globalShowEmptyRetryButton = true;
+    globalEnableRefreshOnEmpty = false;
+    globalLoader = null;
+    logger = defaultPagyLogger;
+    _initialized = false;
+
+    NetworkApiService.instance.refreshConfig();
   }
 
   /// Ensures Pagy has been initialized.

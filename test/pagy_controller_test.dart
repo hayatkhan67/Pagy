@@ -153,8 +153,10 @@ void main() {
         FakeRepo((params) async {
           requests.add(params);
           if (params.page == 1) {
+            // A full page — the server may well have more.
             return _listOnlyResponse([
-              {'id': 1}
+              {'id': 1},
+              {'id': 2},
             ]);
           }
           return _listOnlyResponse(const []);
@@ -164,6 +166,7 @@ void main() {
       final controller = PagyController<int>(
         endPoint: '/items',
         fromMap: (json) => json['id'] as int,
+        limit: 2,
         responseParser: (response) => PagyResponseParser(
           list: response['data'] ?? [],
           totalPages: null,
@@ -178,6 +181,43 @@ void main() {
       expect(controller.state.currentPage, 2);
       expect(controller.state.totalPages, 2);
       expect(requests, hasLength(2));
+    });
+
+    test('stops assuming more pages when a page is short', () async {
+      final requests = <PagyParams>[];
+      final config = PagyConfig();
+      final previous = config.assumeHasMoreWhenTotalPagesNull;
+      config.assumeHasMoreWhenTotalPagesNull = true;
+      addTearDown(() {
+        config.assumeHasMoreWhenTotalPagesNull = previous;
+      });
+
+      final useCase = GetPaginatedDataUseCase(
+        FakeRepo((params) async {
+          requests.add(params);
+          return _listOnlyResponse([
+            {'id': 1}
+          ]);
+        }),
+      );
+
+      final controller = PagyController<int>(
+        endPoint: '/items',
+        fromMap: (json) => json['id'] as int,
+        limit: 2,
+        responseParser: (response) => PagyResponseParser(
+          list: response['data'] ?? [],
+          totalPages: null,
+        ),
+        useCase: useCase,
+      );
+
+      // One item against a limit of 2 means the server has nothing left.
+      await controller.loadData();
+      expect(controller.state.totalPages, 1);
+
+      await controller.loadMore();
+      expect(requests, hasLength(1), reason: 'no trailing empty request');
     });
 
     test('retry should preserve filters from the last failed request', () async {

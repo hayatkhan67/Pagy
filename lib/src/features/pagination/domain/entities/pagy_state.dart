@@ -4,7 +4,7 @@ import '../../../../core/errors/pagy_error.dart';
 ///
 /// `PagyState` is an immutable data holder that represents
 /// the complete state of a paginated list at any given time.
-  /// It is used internally by the pagination controller but can also be
+/// It is used internally by the pagination controller but can also be
 /// accessed externally for building UI based on pagination status.
 ///
 /// ### Properties:

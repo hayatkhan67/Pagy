@@ -9,7 +9,7 @@ class DioInterceptor extends Interceptor {
   @override
   void onResponse(Response response, ResponseInterceptorHandler handler) {
     if (response.statusCode == 401 ||
-        response.data['message'] == 'No such User found - Access denied') {
+        (response.data is Map && response.data['message'] == 'No such User found - Access denied')) {
       onTokenBlacklisted();
     }
     super.onResponse(response, handler);
@@ -18,7 +18,7 @@ class DioInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401 ||
-        err.response?.data['message'] == 'No such User found - Access denied') {
+        (err.response?.data is Map && err.response?.data['message'] == 'No such User found - Access denied')) {
       onTokenBlacklisted();
     }
     super.onError(err, handler);

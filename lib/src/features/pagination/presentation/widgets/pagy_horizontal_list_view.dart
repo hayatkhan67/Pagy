@@ -188,8 +188,9 @@ class PagyHorizontalListView<T> extends PagyBaseView<T> {
   Widget buildLayout(
     BuildContext context,
     int itemCount,
-    Widget Function(BuildContext, int) itemBuilderFn,
-  ) {
+    Widget Function(BuildContext, int) itemBuilderFn, {
+    Widget? footer,
+  }) {
     // If user explicitly wants dynamic height, use it directly
     if (useDynamicHeight) {
       return _buildDynamicHeightLayout(context, itemCount, itemBuilderFn);

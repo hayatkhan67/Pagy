@@ -116,8 +116,9 @@ class PagyListView<T> extends PagyBaseView<T> {
   Widget buildLayout(
     BuildContext context,
     int itemCount,
-    Widget Function(BuildContext, int) itemBuilderFn,
-  ) {
+    Widget Function(BuildContext, int) itemBuilderFn, {
+    Widget? footer,
+  }) {
     return ListView.separated(
       separatorBuilder:
           separatorBuilder ?? (_, __) => SizedBox(height: itemSpacing),

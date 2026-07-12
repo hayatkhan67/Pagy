@@ -172,7 +172,18 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Defaults to [Axis.vertical].
   Axis get scrollDirection => Axis.vertical;
 
+  /// Whether the inline loader/error footer should be delivered to
+  /// [buildLayout] via its `footer` argument rather than rendered as the last
+  /// item.
+  ///
+  /// Multi-column layouts override this to `true` so the footer can span the
+  /// full width instead of occupying a single cell.
+  bool get separateFooter => false;
+
   /// Must be implemented by child classes to define how items are laid out.
+  ///
+  /// [footer] is non-null only when [separateFooter] is `true` and there is an
+  /// inline loader or error to show below the items.
   ///
   /// Examples:
   /// - `ListView.builder` in [PagyListView]
@@ -180,8 +191,9 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   Widget buildLayout(
     BuildContext context,
     int itemCount,
-    Widget Function(BuildContext, int) itemBuilderFn,
-  );
+    Widget Function(BuildContext, int) itemBuilderFn, {
+    Widget? footer,
+  });
 
   /// Builds the shimmer placeholder layout.
   ///
@@ -242,9 +254,10 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       refreshTriggersPagyLoad: refreshTriggersPagyLoad,
       refreshIndicatorBuilder: refreshIndicatorBuilder,
       scrollDirection: scrollDirection,
+      separateFooter: separateFooter,
       shimmerBuilder: shimmerEffect ? buildShimmer : null,
-      layoutBuilder: (ctx, state, itemCount, itemBuilderFn) {
-        return buildLayout(ctx, itemCount, itemBuilderFn);
+      layoutBuilder: (ctx, state, itemCount, itemBuilderFn, footer) {
+        return buildLayout(ctx, itemCount, itemBuilderFn, footer: footer);
       },
     );
   }

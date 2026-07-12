@@ -77,7 +77,9 @@ void main() {
       final result = PagyParsers.simpleList(response);
 
       expect(result.list, hasLength(4));
-      expect(result.totalPages, 20);
+      // `total` is a total item count, not a page count.
+      expect(result.totalPages, isNull);
+      expect(result.totalItems, 20);
     });
 
     test('dataWithMeta - parses data and meta.total_pages', () {

@@ -34,6 +34,14 @@ export 'src/features/pagination/presentation/widgets/common/observer.dart';
 export 'src/features/pagination/presentation/widgets/common/pagy_builder.dart'
     show PagyEmptyStateBuilder;
 
+// 📁 Grid layout delegates — re-exported so PagyGridView.gridDelegate is
+// usable without depending on flutter_staggered_grid_view directly.
+export 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'
+    show
+        SliverSimpleGridDelegate,
+        SliverSimpleGridDelegateWithFixedCrossAxisCount,
+        SliverSimpleGridDelegateWithMaxCrossAxisExtent;
+
 // 📁 Presentation - Widgets
 export 'src/features/pagination/presentation/widgets/pagy_grid_view.dart';
 export 'src/features/pagination/presentation/widgets/pagy_horizontal_list_view.dart';

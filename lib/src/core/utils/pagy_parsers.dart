@@ -70,15 +70,18 @@ class PagyParsers {
   /// ```json
   /// {
   ///   "data": [...],
-  ///   "total": 10
+  ///   "total": 100
   /// }
   /// ```
   ///
-  /// Where `total` represents total page count.
+  /// Where `total` represents the total number of **items** across all pages,
+  /// which is what `total` almost always means in practice. Pagy derives the
+  /// page count from it using the controller's `limit`.
   static PagyResponseParser simpleList(Map<String, dynamic> response) {
     return PagyResponseParser(
       list: response['data'] ?? [],
-      totalPages: response['total'] as int?,
+      totalPages: null,
+      totalItems: response['total'] as int?,
     );
   }
 

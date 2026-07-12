@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 
 import '../../../../core/config/pagy_config.dart';
+import '../../../../core/errors/pagy_error.dart';
 import '../../../../core/exceptions/exception_handling.dart';
 import '../../../../core/utils/pagy_utils.dart';
 
@@ -99,7 +100,7 @@ class NetworkApiService {
       //   rethrow; // or just return Future.error if you want
       // }
       pagyLog('${e.response}', name: endPoint);
-      return _handleApiError(e);
+      _handleApiError(e);
     } catch (e) {
       pagyLog('Unexpected error in $method request: $e', name: endPoint);
       rethrow;
@@ -125,14 +126,21 @@ class NetworkApiService {
     return headers;
   }
 
-  /// Converts DioException to app-specific exception
-  dynamic _handleApiError(DioException e) {
+  /// Converts a [DioException] into a typed [PagyError].
+  Never _handleApiError(DioException e) {
+    // Cancellations must stay DioExceptions so callers can recognise them via
+    // CancelToken.isCancel and drop the result silently.
+    if (CancelToken.isCancel(e)) throw e;
+
     // Special case: no host specified (baseUrl missing or invalid)
     if (e.error is ArgumentError &&
         e.error.toString().contains('No host specified')) {
-      throw '⚠️ API not configured properly. Please set a valid baseUrl.';
+      throw PagyError.unknown(
+        message: '⚠️ API not configured properly. Please set a valid baseUrl.',
+        exception: e,
+      );
     }
 
-    throw ApiException.getException(e);
+    throw ApiException.toPagyError(e);
   }
 }

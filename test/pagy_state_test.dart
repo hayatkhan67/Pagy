@@ -9,7 +9,7 @@ void main() {
       expect(state.data, isEmpty);
       expect(state.isFetching, isFalse);
       expect(state.isMoreFetching, isFalse);
-      expect(state.currentPage, 1); // Default is 1, not 0
+      expect(state.currentPage, 0); // 0 means nothing has been loaded yet
       expect(state.totalPages, 1);
       expect(state.error, isNull);
     });

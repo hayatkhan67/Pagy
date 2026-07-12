@@ -8,11 +8,16 @@ import '../../../../../core/utils/pagy_helpers.dart';
 ///
 /// Provides the current [PagyState], total [itemCount], and an
 /// [itemBuilder] function that can be passed to list/grid builders.
+///
+/// [footer] is non-null only when the layout opted into
+/// [PagyBuilder.separateFooter]; it carries the inline loader or error widget
+/// that would otherwise have been rendered as item `itemCount`.
 typedef LayoutBuilderCallback<T> = Widget Function(
   BuildContext context,
   PagyState<T> state,
   int itemCount,
   Widget Function(BuildContext, int) itemBuilder,
+  Widget? footer,
 );
 
 /// Signature for building a shimmer widget.
@@ -164,6 +169,13 @@ class PagyBuilder<T> extends StatelessWidget {
   /// horizontal scrolling lists.
   final Axis scrollDirection;
 
+  /// Whether the inline loader/error footer is handed to [layoutBuilder]
+  /// separately instead of being rendered as the last item.
+  ///
+  /// Multi-column layouts need this: a footer rendered as item `N + 1` lands
+  /// in a single column instead of spanning the full width.
+  final bool separateFooter;
+
   /// Creates a [PagyBuilder].
   ///
   /// Use this widget indirectly via [PagyListView] or [PagyGridView],
@@ -201,6 +213,7 @@ class PagyBuilder<T> extends StatelessWidget {
     this.refreshTriggersPagyLoad = true,
     this.refreshIndicatorBuilder,
     this.scrollDirection = Axis.vertical,
+    this.separateFooter = false,
   }) : assert(
           placeholderItemModel != null || !shimmerEffect || shimmerBuilder != null,
         'PagyBuilder: shimmerEffect is true but placeholderItemModel is null. '
@@ -216,8 +229,10 @@ class PagyBuilder<T> extends StatelessWidget {
     return ValueListenableBuilder<PagyState<T>>(
       valueListenable: controller!.controller,
       builder: (context, state, _) {
-        // 1️⃣ Initial shimmer or loader
-        if (state.isFetching) {
+        // 1️⃣ Initial shimmer or loader.
+        // Only when there is nothing to show — a pull-to-refresh over existing
+        // items keeps them on screen under the RefreshIndicator spinner.
+        if (state.isFetching && state.data.isEmpty) {
           return shimmerEffect && shimmerBuilder != null
               ? shimmerBuilder!(context)
               : _loader();
@@ -235,9 +250,17 @@ class PagyBuilder<T> extends StatelessWidget {
         }
 
         // 4️⃣ Normal list with optional inline error/footer
-        final hasInlineError = errorMessage != null && state.data.isNotEmpty;
-        final baseCount = calculatePagyItemCount(state, itemShowLimit);
-        final totalCount = baseCount + (hasInlineError ? 1 : 0);
+        final int itemCount;
+        final Widget? footer;
+        if (separateFooter) {
+          itemCount = _visibleItemCount(state);
+          footer = _buildFooter(context, state);
+        } else {
+          final hasInlineError = errorMessage != null && state.data.isNotEmpty;
+          itemCount = calculatePagyItemCount(state, itemShowLimit) +
+              (hasInlineError ? 1 : 0);
+          footer = null;
+        }
 
         return NotificationListener<ScrollNotification>(
           onNotification: (scrollInfo) {
@@ -254,8 +277,9 @@ class PagyBuilder<T> extends StatelessWidget {
             layoutBuilder(
               context,
               state,
-              totalCount,
+              itemCount,
               (ctx, index) => _buildItem(ctx, index, state),
+              footer,
             ),
             enabled: enableRefreshIndicator,
           ),
@@ -275,36 +299,55 @@ class PagyBuilder<T> extends StatelessWidget {
     if (index < state.data.length) {
       return itemBuilder(context, state.data[index], index);
     }
+    return _buildFooter(context, state) ?? const SizedBox.shrink();
+  }
 
+  /// Number of real items rendered by the layout, excluding any footer slot.
+  int _visibleItemCount(PagyState<T> state) {
+    final limit = itemShowLimit;
+    if (limit != null && limit > 0 && state.data.length > limit) return limit;
+    return state.data.length;
+  }
+
+  /// The inline footer for the current state, or `null` when there is none.
+  Widget? _buildFooter(BuildContext context, PagyState<T> state) {
+    if (_errorMessage(state) != null && state.data.isNotEmpty) {
+      return _buildErrorFooter(context, state);
+    }
+    if (state.isMoreFetching) {
+      return _buildLoadingFooter(context);
+    }
+    return null;
+  }
+
+  Widget _buildErrorFooter(BuildContext context, PagyState<T> state) {
     final error = state.error ??
         PagyError.unknown(
           message: state.errorMessage ?? "Unknown error",
         );
-    final errorMessage = _errorMessage(state);
-    if (errorMessage != null && state.data.isNotEmpty) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        child: errorBuilder?.call(
-              error,
-              () => controller!.retry(),
-            ) ??
-            PagyConfig().globalErrorBuilder?.call(
-                  error,
-                  () => controller!.retry(),
-                ) ??
-            DefaultErrorWidget(
-              errorMessage: error.message,
-              onRetry: () => controller!.retry(),
-            ),
-      );
-    }
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: errorBuilder?.call(
+            error,
+            () => controller!.retry(),
+          ) ??
+          PagyConfig().globalErrorBuilder?.call(
+                error,
+                () => controller!.retry(),
+              ) ??
+          DefaultErrorWidget(
+            errorMessage: error.message,
+            onRetry: () => controller!.retry(),
+          ),
+    );
+  }
 
-    // 🔹 Inline shimmer footer (when fetching more)
-    if (state.isMoreFetching && shimmerEffect) {
+  Widget _buildLoadingFooter(BuildContext context) {
+    // A shimmer footer needs a model to render; direct PagyBuilder users may
+    // supply only a shimmerBuilder, in which case fall back to the loader.
+    if (shimmerEffect && placeholderItemModel != null) {
       return _buildShimmerItem(context);
     }
-
-    // 🔹 Inline loader fallback
     return Padding(
       padding: const EdgeInsets.all(16),
       child: _loader(),
