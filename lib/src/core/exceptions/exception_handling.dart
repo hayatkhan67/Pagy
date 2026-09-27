@@ -10,6 +10,38 @@ class ApiException {
       final message = serverMessage['message'];
       if (message is String && message.isNotEmpty) return message;
     } else if (serverMessage is String && serverMessage.isNotEmpty) {
+      final trimmed = serverMessage.trim();
+      // If the response is HTML (e.g. 404/500 server error page),
+      // extract a clean, user-friendly message rather than dumping raw HTML.
+      if (trimmed.startsWith('<!DOCTYPE') ||
+          trimmed.startsWith('<html') ||
+          trimmed.startsWith('<head')) {
+        final preMatch = RegExp(
+          r'<pre>(.*?)</pre>',
+          dotAll: true,
+          caseSensitive: false,
+        ).firstMatch(trimmed);
+        if (preMatch != null && preMatch.group(1)?.trim().isNotEmpty == true) {
+          final code = exception.response?.statusCode;
+          final errorText = preMatch.group(1)!.trim();
+          return code != null ? 'Error $code: $errorText' : errorText;
+        }
+        final titleMatch = RegExp(
+          r'<title>(.*?)</title>',
+          dotAll: true,
+          caseSensitive: false,
+        ).firstMatch(trimmed);
+        if (titleMatch != null &&
+            titleMatch.group(1)?.trim().isNotEmpty == true) {
+          final titleText = titleMatch.group(1)!.trim();
+          final code = exception.response?.statusCode;
+          return code != null ? 'Error $code: $titleText' : titleText;
+        }
+        final code = exception.response?.statusCode;
+        return code != null
+            ? 'Server returned HTTP error $code'
+            : 'Server returned an unexpected HTML error response.';
+      }
       return serverMessage;
     }
 

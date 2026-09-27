@@ -106,8 +106,7 @@ class PagyConfig {
   /// Global error widget builder.
   ///
   /// Used when no custom error UI is provided for a controller.
-  Widget Function(PagyError error, VoidCallback onRetry)?
-      globalErrorBuilder;
+  Widget Function(PagyError error, VoidCallback onRetry)? globalErrorBuilder;
 
   /// Global empty state widget builder.
   Widget Function(VoidCallback onRetry)? globalEmptyBuilder;
@@ -136,6 +135,9 @@ class PagyConfig {
 
   /// Global loader widget.
   Widget? globalLoader;
+
+  /// Global shimmer widget.
+  Widget? globalShimmer;
 
   /// Logger for API/debug messages.
   ///
@@ -170,6 +172,8 @@ class PagyConfig {
     bool? showEmptyRetryButton,
     bool? enableRefreshOnEmpty,
     Widget? loader,
+    Widget? shimmer,
+    Widget? customShimmer,
     Interceptor? interceptor,
     PagyLogger? customLogger,
   }) {
@@ -276,6 +280,7 @@ class PagyConfig {
       globalEnableRefreshOnEmpty = enableRefreshOnEmpty;
     }
     globalLoader = loader;
+    globalShimmer = customShimmer ?? shimmer;
     dioInterceptor = interceptor;
 
     if (customLogger != null) {
@@ -331,6 +336,7 @@ class PagyConfig {
     globalShowEmptyRetryButton = true;
     globalEnableRefreshOnEmpty = false;
     globalLoader = null;
+    globalShimmer = null;
     logger = defaultPagyLogger;
     _initialized = false;
 

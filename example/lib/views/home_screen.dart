@@ -77,13 +77,14 @@ class _HomeScreenState extends State<HomeScreen> {
               ElevatedButton.icon(
                 onPressed: () {
                   // Simulate an error to show stacktrace support
-                  pagyController.controller.value = pagyController.state.copyWith(
-                    error: PagyError.unknown(
-                      message: "Simulated Error for Debugging",
-                      stackTrace: StackTrace.current,
-                    ),
-                    isFetching: false,
-                  );
+                  pagyController.controller.value = pagyController.state
+                      .copyWith(
+                        error: PagyError.unknown(
+                          message: "Simulated Error for Debugging",
+                          stackTrace: StackTrace.current,
+                        ),
+                        isFetching: false,
+                      );
                 },
                 icon: const Icon(Icons.bug_report, size: 18),
                 label: const Text("Show Stacktrace"),
@@ -110,44 +111,9 @@ class _HomeScreenState extends State<HomeScreen> {
               return RefreshIndicator(
                 backgroundColor: Colors.blueAccent,
                 color: Colors.white,
-                onRefresh: () => pagyController.refresh(preserveFilters: preserveFilters),
+                onRefresh: () =>
+                    pagyController.refresh(preserveFilters: preserveFilters),
                 child: child,
-              );
-            },
-            errorBuilder: (error, onRetry) {
-              return Center(
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red[700], size: 48),
-                      const SizedBox(height: 10),
-                      Text(error.message, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 10),
-                      if (error.stackTrace != null)
-                        Container(
-                          padding: const EdgeInsets.all(10),
-                          margin: const EdgeInsets.only(bottom: 10),
-                          decoration: BoxDecoration(
-                            color: Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          constraints: const BoxConstraints(maxHeight: 150),
-                          child: SingleChildScrollView(
-                            child: Text(
-                              error.stackTrace.toString(),
-                              style: const TextStyle(fontSize: 10, fontFamily: 'monospace'),
-                            ),
-                          ),
-                        ),
-                      TextButton(
-                        onPressed: onRetry,
-                        child: const Text("Retry"),
-                      ),
-                    ],
-                  ),
-                ),
               );
             },
             itemBuilder: (context, item) {

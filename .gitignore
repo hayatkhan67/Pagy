@@ -78,3 +78,11 @@ controller/observer.dart
 /pubspec.lock
 /todo_list.todo
 /.vscode
+
+# Internal development tracking
+TODO.md
+todo.md
+FEATURES.md
+features.md
+BUGS.md
+bugs.md

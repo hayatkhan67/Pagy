@@ -85,6 +85,9 @@ class PagyBuilder<T> extends StatelessWidget {
   /// Custom loader widget for pagination.
   final Widget? customLoader;
 
+  /// Custom shimmer widget shown during initial loading.
+  final Widget? customShimmer;
+
   /// Limit number of visible items (useful for previews).
   final int? itemShowLimit;
 
@@ -196,6 +199,7 @@ class PagyBuilder<T> extends StatelessWidget {
     this.placeholderItemModel,
     this.separatorBuilder,
     this.customLoader,
+    this.customShimmer,
     this.itemShowLimit,
     this.shrinkWrap = false,
     this.disableScrolling = false,
@@ -215,9 +219,12 @@ class PagyBuilder<T> extends StatelessWidget {
     this.scrollDirection = Axis.vertical,
     this.separateFooter = false,
   }) : assert(
-          placeholderItemModel != null || !shimmerEffect || shimmerBuilder != null,
+          placeholderItemModel != null ||
+              !shimmerEffect ||
+              shimmerBuilder != null ||
+              customShimmer != null,
         'PagyBuilder: shimmerEffect is true but placeholderItemModel is null. '
-        'Provide a placeholderItemModel or a custom shimmerBuilder.',
+        'Provide a placeholderItemModel, customShimmer, or a custom shimmerBuilder.',
       );
 
   @override
@@ -233,9 +240,17 @@ class PagyBuilder<T> extends StatelessWidget {
         // Only when there is nothing to show — a pull-to-refresh over existing
         // items keeps them on screen under the RefreshIndicator spinner.
         if (state.isFetching && state.data.isEmpty) {
-          return shimmerEffect && shimmerBuilder != null
-              ? shimmerBuilder!(context)
-              : _loader();
+          final effectiveShimmer =
+              shimmerEffect || customShimmer != null || shimmerBuilder != null;
+          if (effectiveShimmer) {
+            final shimmerWidget = customShimmer ??
+                shimmerBuilder?.call(context) ??
+                PagyConfig().globalShimmer;
+            if (shimmerWidget != null) {
+              return shimmerWidget;
+            }
+          }
+          return _loader();
         }
 
         // 2️⃣ Full-screen error state (when no data available)

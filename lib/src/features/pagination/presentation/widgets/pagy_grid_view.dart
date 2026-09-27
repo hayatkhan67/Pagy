@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
+import '../../../../core/config/pagy_config.dart';
 import '../controllers/pagy_controller.dart';
 import 'common/pagy_shimmer.dart';
 import 'pagy_base_view.dart';
@@ -130,14 +131,19 @@ class PagyGridView<T> extends PagyBaseView<T> {
     super.refreshTriggersPagyLoad,
     super.refreshIndicatorBuilder,
     super.customLoader,
+    super.customShimmer,
+    super.shimmerBuilder,
     this.crossAxisCount = 2,
     this.crossAxisSpacing = 9,
     this.mainAxisSpacing = 10,
     this.gridDelegate,
   }) : assert(
-          placeholderItemModel != null || shimmerEffect == false,
+          placeholderItemModel != null ||
+              shimmerEffect == false ||
+              customShimmer != null ||
+              shimmerBuilder != null,
           'PagyGridView: shimmerEffect is true but placeholderItemModel is null. '
-          'Provide a placeholderItemModel when enabling shimmer placeholders.',
+          'Provide a placeholderItemModel, customShimmer, or shimmerBuilder when enabling shimmer placeholders.',
         );
 
   /// The grid renders its footer as a full-width sliver below the columns.
@@ -159,6 +165,15 @@ class PagyGridView<T> extends PagyBaseView<T> {
   /// rather than the sliver layout [buildLayout] uses for real data.
   @override
   Widget buildShimmer(BuildContext context) {
+    if (customShimmer != null) {
+      return customShimmer!;
+    }
+    if (shimmerBuilder != null) {
+      return shimmerBuilder!(context);
+    }
+    if (PagyConfig().globalShimmer != null) {
+      return PagyConfig().globalShimmer!;
+    }
     return PagyShimmer<T>(
       count: placeholderItemCount,
       itemBuilder: (c, index) {

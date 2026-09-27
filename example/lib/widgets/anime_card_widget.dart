@@ -32,7 +32,9 @@ class AnimeCardWidget extends StatelessWidget {
                 image: DecorationImage(
                   image: data.image != null && data.image!.isNotEmpty
                       ? NetworkImage(
-                          "https://pagy-backend-ten.vercel.app/uploads/${data.image!}",
+                          data.image!.startsWith('http')
+                              ? data.image!
+                              : "https://pagy-backend-ten.vercel.app/uploads/${data.image!}",
                         )
                       : const AssetImage('assets/images/1746876883837-p1.jpeg')
                             as ImageProvider,

@@ -68,9 +68,9 @@ class PagyListView<T> extends PagyBaseView<T> {
   /// Requires a [PagyController] and an [itemBuilder].
   ///
   /// - If [shimmerEffect] is enabled, you **must** provide a
-  ///   [placeholderItemModel].
+  ///   [placeholderItemModel], or pass [customShimmer] / [shimmerBuilder].
   /// - Supports custom states via [errorBuilder], [emptyStateBuilder],
-  ///   and [customLoader].
+  ///   [customLoader], and [customShimmer].
   /// - Use [emptyMessage] and [emptyIcon] to customize empty state.
   /// - Set [enableRefreshOnEmpty] to allow pull-to-refresh when empty.
   const PagyListView({
@@ -102,10 +102,15 @@ class PagyListView<T> extends PagyBaseView<T> {
     super.refreshTriggersPagyLoad,
     super.refreshIndicatorBuilder,
     super.customLoader,
+    super.customShimmer,
+    super.shimmerBuilder,
   }) : assert(
-          placeholderItemModel != null || !shimmerEffect,
+          placeholderItemModel != null ||
+              !shimmerEffect ||
+              customShimmer != null ||
+              shimmerBuilder != null,
           'PagyListView: shimmerEffect is true but placeholderItemModel is null. '
-          'Provide a placeholderItemModel when enabling shimmer placeholders.',
+          'Provide a placeholderItemModel, customShimmer, or shimmerBuilder when enabling shimmer placeholders.',
         );
 
   /// Builds the core layout of the list when data is available.

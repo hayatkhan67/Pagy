@@ -64,6 +64,7 @@ Also changed:
 
   `SliverSimpleGridDelegate` and both built-in delegates are re-exported from `package:pagy/pagy.dart`, so you don't need a direct dependency on `flutter_staggered_grid_view`. Custom subclasses work too, and the paging footer stays full-width regardless.
 
+- **Custom Shimmer Support** — Pass your own `customShimmer` widget or `shimmerBuilder` callback to `PagyListView`, `PagyGridView`, `PagyHorizontalListView`, `PagyBaseView`, or `PagyBuilder` without needing a `placeholderItemModel`. You can also configure a global default shimmer via `PagyConfig().initialize(customShimmer: ...)`.
 - **`PagyConfig().reset()`** — restores every setting to its default and allows `initialize()` to run again. Useful for tests and for re-login flows that swap the base URL or token.
 - Calling `initialize()` more than once now logs a warning instead of silently doing nothing.
 

@@ -32,7 +32,7 @@ export 'src/features/pagination/presentation/controllers/pagy_controller.dart';
 // 📁 Presentation - Widgets - Common
 export 'src/features/pagination/presentation/widgets/common/observer.dart';
 export 'src/features/pagination/presentation/widgets/common/pagy_builder.dart'
-    show PagyEmptyStateBuilder;
+    show PagyEmptyStateBuilder, ShimmerBuilder;
 
 // 📁 Grid layout delegates — re-exported so PagyGridView.gridDelegate is
 // usable without depending on flutter_staggered_grid_view directly.

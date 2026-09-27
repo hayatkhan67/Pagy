@@ -200,6 +200,8 @@ PagyConfig().initialize(
 );
 ```
 
+`preserveFiltersOnRefresh` defaults to `true`.
+
 **Manual Refresh with Control:**
 ```dart
 // Keep filters for this refresh only
@@ -207,6 +209,19 @@ pagyController.refresh(preserveFilters: true);
 
 // Clear filters manually
 pagyController.clearFilters();
+```
+
+**`applyFilters` replaces, it does not merge.** Each call installs a brand new filter map,
+so carry over anything you want to keep:
+
+```dart
+pagyController.applyFilters({'category': 'books'});
+
+// This DROPS 'category' — only 'price_max' is sent.
+pagyController.applyFilters({'price_max': 500});
+
+// Merge yourself to keep both.
+pagyController.applyFilters({...?pagyController.filter, 'price_max': 500});
 ```
 
 ### 2. Custom Refresh Indicator
@@ -226,15 +241,55 @@ PagyListView<Product>(
 )
 ```
 
-### 3. Error Handling & Stacktraces
+### 3. Error Handling with `PagyError`
 
-For better developer experience, `PagyError` now captures the stacktrace of the failure.
+Every failure reaches you as a `PagyError`, classified by `PagyErrorType`. Branch on the
+type to react differently — send the user to the login screen on `unauthorized`, offer a
+retry on `network`, and so on.
+
+| `PagyErrorType` | Raised when |
+|---|---|
+| `network` | The device could not reach the server. |
+| `timeout` | Connect, send, or receive timed out. |
+| `unauthorized` | The server answered `401` or `403`. |
+| `serverError` | The server answered `5xx`. |
+| `malformedResponse` | `responseParser` or `fromMap` could not read the payload. |
+| `cancelled` | The request was superseded by a newer one. |
+| `unknown` | Anything else. |
+
+`PagyError` also carries `statusCode` (when the server replied), a human-readable
+`suggestion`, the `originalException`, and the `stackTrace` of the failure.
 
 ```dart
-if (pagyController.controller.value.error != null) {
-  final error = pagyController.controller.value.error!;
-  print(error.message);
-  print(error.stackTrace); // Access the full stacktrace
+PagyListView<Product>(
+  controller: pagyController,
+  errorBuilder: (error, onRetry) {
+    switch (error.type) {
+      case PagyErrorType.unauthorized:
+        return LoginPrompt(statusCode: error.statusCode);
+      case PagyErrorType.network:
+      case PagyErrorType.timeout:
+        return OfflineNotice(onRetry: onRetry);
+      default:
+        return ErrorView(
+          message: error.message,       // the server's message, when it sent one
+          hint: error.suggestion,       // e.g. "Please check your internet connection"
+          onRetry: onRetry,
+        );
+    }
+  },
+  itemBuilderWithIndex: (context, product, i) => ProductCard(product: product),
+)
+```
+
+Reading the error directly off the state works too, and `stackTrace` points at the
+original throw site:
+
+```dart
+final error = pagyController.state.error;
+if (error != null) {
+  debugPrint('${error.type} (${error.statusCode}): ${error.message}');
+  debugPrint('${error.stackTrace}');
 }
 ```
 
@@ -354,6 +409,9 @@ responseParser: PagyParsers.itemsWithTotal
 // For: { "results": [...], "page_count": 10 }
 responseParser: PagyParsers.resultsWithCount
 
+// For: { "data": [...], "total": 100 }  — `total` counts items, not pages
+responseParser: PagyParsers.simpleList
+
 // For Laravel: { "data": [...], "last_page": 10 }
 responseParser: PagyParsers.laravel
 
@@ -443,6 +501,26 @@ PagyGridView<Product>(
 )
 ```
 
+Need more than fixed columns? Pass a `gridDelegate` to reach the full masonry
+layout surface. `crossAxisCount` is then ignored; spacing still applies.
+
+```dart
+PagyGridView<Photo>(
+  controller: pagyController,
+  // Responsive: as many columns as fit, each at most 180px wide.
+  gridDelegate: const SliverSimpleGridDelegateWithMaxCrossAxisExtent(
+    maxCrossAxisExtent: 180,
+  ),
+  itemBuilderWithIndex: (context, photo, i) => PhotoTile(photo: photo),
+)
+```
+
+Both `SliverSimpleGridDelegateWithFixedCrossAxisCount` and
+`SliverSimpleGridDelegateWithMaxCrossAxisExtent` are re-exported from
+`package:pagy/pagy.dart`, so you don't need to depend on
+`flutter_staggered_grid_view` yourself. Custom `SliverSimpleGridDelegate`
+subclasses work too. The paging footer stays full-width in every case.
+
 ### 5. Horizontal List View
 
 Perfect for category carousels, featured products, or horizontal galleries:
@@ -487,6 +565,36 @@ Column(
 
 > **💡 Note:** When `useDynamicHeight` is `true`, all items are built upfront (not lazily), so use with caution for very large lists.
 
+### Custom Shimmer Support
+
+Pass a `customShimmer` widget or a `shimmerBuilder` callback to any Pagy view without needing to define a `placeholderItemModel`:
+
+#### Per-View Custom Shimmer
+```dart
+PagyListView<Product>(
+  controller: pagyController,
+  customShimmer: const MyCustomShimmerLoadingView(),
+  itemBuilderWithIndex: (context, product, index) => ProductCard(product: product),
+)
+```
+
+#### Custom Shimmer Builder
+```dart
+PagyGridView<Product>(
+  controller: pagyController,
+  shimmerBuilder: (context) => const MyCustomGridShimmer(),
+  itemBuilderWithIndex: (context, product, index) => ProductCard(product: product),
+)
+```
+
+#### Global Custom Shimmer
+Configure a global fallback shimmer across your app via `PagyConfig`:
+```dart
+PagyConfig().initialize(
+  baseUrl: "https://api.example.com/",
+  customShimmer: const MyGlobalShimmerPlaceholder(),
+);
+```
 
 ### 6. Show Pagination Info in UI
 

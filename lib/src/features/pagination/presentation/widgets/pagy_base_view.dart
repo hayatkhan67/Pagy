@@ -127,6 +127,18 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Custom loader widget shown during pagination.
   final Widget? customLoader;
 
+  /// Custom shimmer widget shown during initial loading.
+  ///
+  /// When provided, this overrides the default skeleton shimmer and does not
+  /// require [placeholderItemModel].
+  final Widget? customShimmer;
+
+  /// Custom builder for shimmer loading state.
+  ///
+  /// When provided, this overrides the default skeleton shimmer and does not
+  /// require [placeholderItemModel].
+  final ShimmerBuilder? shimmerBuilder;
+
   /// Creates a base Pagy-powered view.
   ///
   /// - [controller] is required to manage pagination.
@@ -157,13 +169,19 @@ abstract class PagyBaseView<T> extends StatelessWidget {
     this.refreshTriggersPagyLoad = true,
     this.refreshIndicatorBuilder,
     this.customLoader,
+    this.customShimmer,
+    this.shimmerBuilder,
   })  : assert(
           itemBuilder != null || itemBuilderWithIndex != null,
           'Either itemBuilder or itemBuilderWithIndex must be provided',
         ),
         assert(
-          placeholderItemModel != null || !shimmerEffect,
-          'PagyBaseView: shimmerEffect is enabled but placeholderItemModel is null.',
+          placeholderItemModel != null ||
+              !shimmerEffect ||
+              customShimmer != null ||
+              shimmerBuilder != null,
+          'PagyBaseView: shimmerEffect is enabled but placeholderItemModel is null. '
+          'Provide a placeholderItemModel, customShimmer, or shimmerBuilder.',
         );
 
   /// The scroll direction of the view.
@@ -199,6 +217,15 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   ///
   /// Can be overridden by child classes for custom shimmer appearance.
   Widget buildShimmer(BuildContext context) {
+    if (customShimmer != null) {
+      return customShimmer!;
+    }
+    if (shimmerBuilder != null) {
+      return shimmerBuilder!(context);
+    }
+    if (PagyConfig().globalShimmer != null) {
+      return PagyConfig().globalShimmer!;
+    }
     return PagyShimmer<T>(
       count: placeholderItemCount,
       itemBuilder: (c, index) {
@@ -229,13 +256,16 @@ abstract class PagyBaseView<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final effectiveShimmer =
+        shimmerEffect || customShimmer != null || shimmerBuilder != null;
     return PagyBuilder<T>(
       controller: controller,
       itemBuilder: _effectiveItemBuilder,
-      shimmerEffect: shimmerEffect,
+      shimmerEffect: effectiveShimmer,
       placeholderItemCount: placeholderItemCount,
       placeholderItemModel: placeholderItemModel,
       customLoader: customLoader,
+      customShimmer: customShimmer,
       shrinkWrap: shrinkWrap,
       disableScrolling: disableScrolling,
       scrollPhysics: scrollPhysics,
@@ -255,7 +285,7 @@ abstract class PagyBaseView<T> extends StatelessWidget {
       refreshIndicatorBuilder: refreshIndicatorBuilder,
       scrollDirection: scrollDirection,
       separateFooter: separateFooter,
-      shimmerBuilder: shimmerEffect ? buildShimmer : null,
+      shimmerBuilder: effectiveShimmer ? buildShimmer : null,
       layoutBuilder: (ctx, state, itemCount, itemBuilderFn, footer) {
         return buildLayout(ctx, itemCount, itemBuilderFn, footer: footer);
       },
