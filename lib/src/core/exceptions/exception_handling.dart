@@ -11,11 +11,12 @@ class ApiException {
       if (message is String && message.isNotEmpty) return message;
     } else if (serverMessage is String && serverMessage.isNotEmpty) {
       final trimmed = serverMessage.trim();
+      final lower = trimmed.toLowerCase();
       // If the response is HTML (e.g. 404/500 server error page),
       // extract a clean, user-friendly message rather than dumping raw HTML.
-      if (trimmed.startsWith('<!DOCTYPE') ||
-          trimmed.startsWith('<html') ||
-          trimmed.startsWith('<head')) {
+      if (lower.startsWith('<!doctype') ||
+          lower.startsWith('<html') ||
+          lower.startsWith('<head')) {
         final preMatch = RegExp(
           r'<pre>(.*?)</pre>',
           dotAll: true,

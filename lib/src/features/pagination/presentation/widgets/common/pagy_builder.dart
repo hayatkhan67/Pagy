@@ -104,8 +104,7 @@ class PagyBuilder<T> extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
 
   /// Custom error widget builder for displaying errors.
-  final Widget Function(PagyError error, VoidCallback onRetry)?
-      errorBuilder;
+  final Widget Function(PagyError error, VoidCallback onRetry)? errorBuilder;
 
   /// Custom empty state widget builder with retry support.
   ///
@@ -223,9 +222,9 @@ class PagyBuilder<T> extends StatelessWidget {
               !shimmerEffect ||
               shimmerBuilder != null ||
               customShimmer != null,
-        'PagyBuilder: shimmerEffect is true but placeholderItemModel is null. '
-        'Provide a placeholderItemModel, customShimmer, or a custom shimmerBuilder.',
-      );
+          'PagyBuilder: shimmerEffect is true but placeholderItemModel is null. '
+          'Provide a placeholderItemModel, customShimmer, or a custom shimmerBuilder.',
+        );
 
   @override
   Widget build(BuildContext context) {
@@ -243,9 +242,8 @@ class PagyBuilder<T> extends StatelessWidget {
           final effectiveShimmer =
               shimmerEffect || customShimmer != null || shimmerBuilder != null;
           if (effectiveShimmer) {
-            final shimmerWidget = customShimmer ??
-                shimmerBuilder?.call(context) ??
-                PagyConfig().globalShimmer;
+            final shimmerWidget =
+                customShimmer ?? shimmerBuilder?.call(context);
             if (shimmerWidget != null) {
               return shimmerWidget;
             }

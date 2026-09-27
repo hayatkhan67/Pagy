@@ -18,6 +18,7 @@ import '../utils/pagy_utils.dart';
 ///   baseUrl: 'https://api.example.com',
 ///   pageKey: 'page',
 ///   limitKey: 'limit',
+///   firstPage: 1, // use 0 for zero-indexed APIs
 ///   apiLogs: true,
 ///   paginationMode: PaginationPayloadMode.queryParams,
 ///   errorBuilder: (msg, retry) => ErrorView(msg: msg, onRetry: retry),
@@ -52,6 +53,16 @@ class PagyConfig {
   ///
   /// Optional, may be null depending on your API.
   String? limitKey;
+
+  /// The page number your backend uses for its first page.
+  ///
+  /// Defaults to `1`. Set it to `0` for zero-indexed APIs. Only the number
+  /// sent to the server is shifted; [PagyState.currentPage] and
+  /// [PagyMetadata] stay 1-based (with `0` meaning nothing loaded yet), so UI
+  /// code reads the same for every backend.
+  ///
+  /// A controller can override this with `PagyController.firstPage`.
+  int firstPage = 1;
 
   /// Scroll offset threshold (in pixels) before triggering pagination load.
   ///
@@ -136,9 +147,6 @@ class PagyConfig {
   /// Global loader widget.
   Widget? globalLoader;
 
-  /// Global shimmer widget.
-  Widget? globalShimmer;
-
   /// Logger for API/debug messages.
   ///
   /// Defaults to [defaultPagyLogger] but can be overridden
@@ -157,6 +165,7 @@ class PagyConfig {
     BaseOptions? baseOptions,
     String pageKey = 'page',
     String? limitKey,
+    int firstPage = 1,
     double scrollOffset = 200,
     bool? preserveFiltersOnRefresh,
     bool? assumeHasMoreWhenTotalPagesNull,
@@ -172,8 +181,6 @@ class PagyConfig {
     bool? showEmptyRetryButton,
     bool? enableRefreshOnEmpty,
     Widget? loader,
-    Widget? shimmer,
-    Widget? customShimmer,
     Interceptor? interceptor,
     PagyLogger? customLogger,
   }) {
@@ -247,7 +254,9 @@ class PagyConfig {
     );
 
     this.pageKey = pageKey;
+    assert(firstPage >= 0, '❌ firstPage must be 0 or greater. Got: $firstPage');
     this.limitKey = limitKey;
+    this.firstPage = firstPage;
     this.scrollOffset = scrollOffset;
     if (preserveFiltersOnRefresh != null) {
       this.preserveFiltersOnRefresh = preserveFiltersOnRefresh;
@@ -280,7 +289,6 @@ class PagyConfig {
       globalEnableRefreshOnEmpty = enableRefreshOnEmpty;
     }
     globalLoader = loader;
-    globalShimmer = customShimmer ?? shimmer;
     dioInterceptor = interceptor;
 
     if (customLogger != null) {
@@ -300,6 +308,7 @@ class PagyConfig {
         'Base URL: ${this.baseUrl.isNotEmpty ? this.baseUrl : "(using BaseOptions)"}\n'
         'Page Key: $pageKey\n'
         'Limit Key: ${limitKey ?? "(not set)"}\n'
+        'First Page: $firstPage\n'
         'Payload Mode: ${this.payloadMode}',
         name: 'Pagy Init',
       );
@@ -319,6 +328,7 @@ class PagyConfig {
     baseOptions = null;
     pageKey = 'page';
     limitKey = null;
+    firstPage = 1;
     scrollOffset = 200;
     preserveFiltersOnRefresh = true;
     assumeHasMoreWhenTotalPagesNull = false;
@@ -336,7 +346,6 @@ class PagyConfig {
     globalShowEmptyRetryButton = true;
     globalEnableRefreshOnEmpty = false;
     globalLoader = null;
-    globalShimmer = null;
     logger = defaultPagyLogger;
     _initialized = false;
 

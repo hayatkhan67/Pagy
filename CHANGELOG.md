@@ -30,6 +30,7 @@ errorBuilder: (error, onRetry) {
 | **Failed refresh no longer desyncs state** | `refresh()` cleared the item list *before* the request. On failure the UI still showed the old items while `controller.items` was empty, and the next helper call collapsed the visible list. The list is now cleared only once new data arrives. |
 | **Duplicate load-more requests** | Two scroll notifications in one frame both fired a request; the second cancelled the first and refetched the same page. `loadData` now ignores a load-more while one is in flight. |
 | **`ApiException` crash on non-string `message`** | A response like `{"message": {"en": "..."}}` threw a `TypeError` *inside* the error handler. Non-string messages now fall back to the type-based message. |
+| **Raw HTML as the error message** | A proxy or server error page (`502 Bad Gateway`, etc.) was dumped into `error.message` as raw HTML. Pagy now extracts the page's `<pre>` or `<title>` text, e.g. `Error 502: Bad Gateway`. |
 | **Inline shimmer crash** | Using `PagyBuilder` directly with a `shimmerBuilder` but no `placeholderItemModel` threw on load-more. It now falls back to the loader. |
 | **Inconsistent "nothing loaded" state** | `reset()` reported `currentPage: 0` while a fresh controller reported `1`, so a never-loaded controller claimed `isLastPage == true`. Standardized on `0`. |
 | **`headers` typing** | Was `dynamic` while `NetworkApiService` required `Map<String, String>?`, so `{'X-Foo': 1}` compiled and crashed at runtime. Now typed. |
@@ -45,9 +46,12 @@ Also changed:
 
 - **Pull-to-refresh keeps your list on screen.** Previously the whole list was swapped for the shimmer/loader. The full-screen loading state is now shown only when there is nothing to display.
 - **`assumeHasMoreWhenTotalPagesNull` stops at a short page.** A page returning fewer items than `limit` is treated as the last page, eliminating the guaranteed trailing empty request.
+- **`PagyBuilder` shows a supplied `shimmerBuilder` even when `shimmerEffect` is `false`.** Previously the builder was ignored and the loader was shown.
 - **`PagyGridView`'s inline loader and error span the full width.** They previously rendered inside a single masonry cell, which looked broken with two or more columns. The data layout now builds on `CustomScrollView` + `SliverMasonryGrid` so the footer can be a full-width sliver. The shimmer placeholder layout has no footer and keeps using `MasonryGridView` unchanged.
 
 ### ➕ Added
+
+- **`firstPage` for zero-indexed APIs** — set `PagyConfig().initialize(firstPage: 0)` globally, or `PagyController(firstPage: 0)` per endpoint, when your backend's first page is `0`. Defaults to `1`. Only the page number sent to the server is shifted; `state.currentPage` and `metadata` stay 1-based (`0` = nothing loaded yet), so UI code reads the same for every backend. A custom `PagyPageRepository` receives the server page in `params.page`.
 
 - **`PagyGridView.gridDelegate`** — opt into the full masonry layout surface when the fixed-column default isn't enough. Omit it and nothing changes; supply one and `crossAxisCount` gives way to it while spacing still applies.
 
@@ -64,7 +68,7 @@ Also changed:
 
   `SliverSimpleGridDelegate` and both built-in delegates are re-exported from `package:pagy/pagy.dart`, so you don't need a direct dependency on `flutter_staggered_grid_view`. Custom subclasses work too, and the paging footer stays full-width regardless.
 
-- **Custom Shimmer Support** — Pass your own `customShimmer` widget or `shimmerBuilder` callback to `PagyListView`, `PagyGridView`, `PagyHorizontalListView`, `PagyBaseView`, or `PagyBuilder` without needing a `placeholderItemModel`. You can also configure a global default shimmer via `PagyConfig().initialize(customShimmer: ...)`.
+- **Custom Shimmer Support** — Pass your own `customShimmer` widget or `shimmerBuilder` callback to `PagyListView`, `PagyGridView`, `PagyHorizontalListView`, `PagyBaseView`, or `PagyBuilder` without needing a `placeholderItemModel`. Precedence: `customShimmer` → `shimmerBuilder` → `placeholderItemModel` skeleton.
 - **`PagyConfig().reset()`** — restores every setting to its default and allows `initialize()` to run again. Useful for tests and for re-login flows that swap the base URL or token.
 - Calling `initialize()` more than once now logs a warning instead of silently doing nothing.
 

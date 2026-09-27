@@ -28,11 +28,12 @@ Response _pageResponse(List<int> ids, {int totalPages = 3}) {
 }
 
 PagyController<int> _controller(GetPaginatedDataUseCase useCase,
-    {int limit = 2}) {
+    {int limit = 2, int? firstPage}) {
   return PagyController<int>(
     endPoint: '/items',
     fromMap: (json) => json['id'] as int,
     limit: limit,
+    firstPage: firstPage,
     responseParser: PagyParsers.dataWithPagination,
     useCase: useCase,
   );
@@ -261,6 +262,81 @@ void main() {
       await controller.loadMore();
 
       expect(requests.map((r) => r.page), [1, 1]);
+    });
+  });
+
+  group('firstPage', () {
+    tearDown(() => PagyConfig().reset());
+
+    GetPaginatedDataUseCase recording(List<PagyParams> requests) =>
+        GetPaginatedDataUseCase(
+          FakeRepo((params) async {
+            requests.add(params);
+            return _pageResponse([1, 2]);
+          }),
+        );
+
+    test('defaults to 1-based requests', () async {
+      final requests = <PagyParams>[];
+      final controller = _controller(recording(requests));
+
+      await controller.loadData();
+      await controller.loadMore();
+
+      expect(requests.map((r) => r.page), [1, 2]);
+    });
+
+    test('global firstPage: 0 sends zero-indexed pages', () async {
+      PagyConfig()
+          .initialize(baseUrl: 'https://api.example.com/', firstPage: 0);
+      final requests = <PagyParams>[];
+      final controller = _controller(recording(requests));
+
+      await controller.loadData();
+      await controller.loadMore();
+
+      expect(requests.map((r) => r.page), [0, 1]);
+      // State and metadata stay 1-based regardless of the backend.
+      expect(controller.state.currentPage, 2);
+      expect(controller.metadata.isFirstPage, isFalse);
+    });
+
+    test('controller firstPage overrides the global setting', () async {
+      PagyConfig()
+          .initialize(baseUrl: 'https://api.example.com/', firstPage: 0);
+      final requests = <PagyParams>[];
+      final controller = _controller(recording(requests), firstPage: 1);
+
+      await controller.loadData();
+
+      expect(requests.single.page, 1);
+    });
+
+    test('retry re-requests the same server page', () async {
+      var fail = true;
+      final requests = <PagyParams>[];
+      final controller = _controller(
+        GetPaginatedDataUseCase(
+          FakeRepo((params) async {
+            requests.add(params);
+            if (fail) {
+              throw DioException(
+                requestOptions: RequestOptions(path: '/items'),
+                type: DioExceptionType.connectionError,
+              );
+            }
+            return _pageResponse([1, 2]);
+          }),
+        ),
+        firstPage: 0,
+      );
+
+      await controller.loadData();
+      fail = false;
+      await controller.retry();
+
+      expect(requests.map((r) => r.page), [0, 0]);
+      expect(controller.state.currentPage, 1);
     });
   });
 }

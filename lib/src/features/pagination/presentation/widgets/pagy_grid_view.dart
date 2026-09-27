@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
-import '../../../../core/config/pagy_config.dart';
 import '../controllers/pagy_controller.dart';
 import 'common/pagy_shimmer.dart';
 import 'pagy_base_view.dart';
@@ -139,7 +138,7 @@ class PagyGridView<T> extends PagyBaseView<T> {
     this.gridDelegate,
   }) : assert(
           placeholderItemModel != null ||
-              shimmerEffect == false ||
+              !shimmerEffect ||
               customShimmer != null ||
               shimmerBuilder != null,
           'PagyGridView: shimmerEffect is true but placeholderItemModel is null. '
@@ -159,21 +158,15 @@ class PagyGridView<T> extends PagyBaseView<T> {
       );
 
   EdgeInsetsGeometry get _effectivePadding =>
-      padding ?? const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 16);
+      padding ??
+      const EdgeInsets.symmetric(horizontal: 16).copyWith(bottom: 16);
 
   /// The shimmer has no paging footer, so it keeps the plain [MasonryGridView]
   /// rather than the sliver layout [buildLayout] uses for real data.
   @override
   Widget buildShimmer(BuildContext context) {
-    if (customShimmer != null) {
-      return customShimmer!;
-    }
-    if (shimmerBuilder != null) {
-      return shimmerBuilder!(context);
-    }
-    if (PagyConfig().globalShimmer != null) {
-      return PagyConfig().globalShimmer!;
-    }
+    final override = resolveShimmerOverride(context);
+    if (override != null) return override;
     return PagyShimmer<T>(
       count: placeholderItemCount,
       itemBuilder: (c, index) {

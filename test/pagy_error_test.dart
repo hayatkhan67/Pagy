@@ -15,7 +15,8 @@ void main() {
     });
 
     test('PagyError.toString should include truncated stackTrace', () {
-      final stackTrace = StackTrace.fromString('line 1\nline 2\nline 3\nline 4\nline 5\nline 6');
+      final stackTrace = StackTrace.fromString(
+          'line 1\nline 2\nline 3\nline 4\nline 5\nline 6');
       final error = PagyError.unknown(
         message: 'Test error',
         stackTrace: stackTrace,
@@ -31,7 +32,7 @@ void main() {
     test('PagyError.fromException should capture stackTrace', () {
       final stackTrace = StackTrace.current;
       final exception = Exception('Nested error');
-      
+
       final error = PagyError.fromException(
         exception,
         stackTrace: stackTrace,
@@ -59,9 +60,9 @@ void main() {
     test('PagyError.copyWith should preserve or update stackTrace', () {
       final trace1 = StackTrace.fromString('trace 1');
       final trace2 = StackTrace.fromString('trace 2');
-      
+
       final error = PagyError.unknown(message: 'err', stackTrace: trace1);
-      
+
       expect(error.copyWith(message: 'new').stackTrace, equals(trace1));
       expect(error.copyWith(stackTrace: trace2).stackTrace, equals(trace2));
     });

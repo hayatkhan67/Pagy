@@ -80,6 +80,13 @@ class PagyController<T> {
   /// Number of items to fetch per page (default: `10`).
   final int limit;
 
+  /// The page number this endpoint uses for its first page.
+  ///
+  /// Overrides [PagyConfig.firstPage] (default `1`) for this controller. Set
+  /// it to `0` for zero-indexed APIs. Only the page number sent to the server
+  /// is shifted; [state] and [metadata] stay 1-based.
+  final int? firstPage;
+
   /// Internal filter object for persisting last applied filters.
   ///
   /// Updated when [loadData] is called with new filter parameters.
@@ -192,6 +199,7 @@ class PagyController<T> {
     @Deprecated('Use query instead') this.additionalQueryParams,
     this.query,
     this.limit = 10,
+    this.firstPage,
     @Deprecated('Use payloadMode instead') this.paginationMode,
     this.payloadMode,
     this.payloadData,
@@ -202,6 +210,10 @@ class PagyController<T> {
   })  : controller = ValueNotifier<PagyState<T>>(PagyState<T>()),
         _useCase = useCase,
         _pageUseCase = pageUseCase {
+    assert(
+      firstPage == null || firstPage! >= 0,
+      'firstPage must be 0 or greater. Got: $firstPage',
+    );
     // Ensure both old and new parameters work
     assert(
       responseMapper != null || responseParser != null,
@@ -315,6 +327,10 @@ class PagyController<T> {
   PaginationPayloadMode? get _effectivePayloadMode =>
       // ignore: deprecated_member_use_from_same_package
       payloadMode ?? paginationMode;
+
+  /// Converts a 1-based page into the page number the backend expects.
+  num _requestPage(num page) =>
+      page - 1 + (firstPage ?? PagyConfig().firstPage);
 
   /// Gets the effective use case (supports dependency injection override).
   GetPaginatedDataUseCase get _effectiveUseCase =>

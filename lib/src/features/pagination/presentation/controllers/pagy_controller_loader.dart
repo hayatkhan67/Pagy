@@ -46,8 +46,8 @@ extension PagyControllerLoader<T> on PagyController<T> {
     num? pageOverride,
     bool? preserveFiltersOnRefresh,
   }) async {
-    final shouldPreserveFilters = preserveFiltersOnRefresh ??
-        PagyConfig().preserveFiltersOnRefresh;
+    final shouldPreserveFilters =
+        preserveFiltersOnRefresh ?? PagyConfig().preserveFiltersOnRefresh;
 
     // Store filter state
     if (queryParameter != null) {
@@ -107,7 +107,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
           endPoint: endPoint,
           requestType: requestType,
           limit: limit,
-          page: currentPage,
+          page: _requestPage(currentPage),
           additionalQueryParams: _effectiveQuery,
           payloadData: effectivePayload,
           token: token,
@@ -119,8 +119,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
           fromMap: fromMap,
         );
 
-        final PagyPage<T> page =
-            await _effectivePageUseCase.call(pageParams);
+        final PagyPage<T> page = await _effectivePageUseCase.call(pageParams);
 
         // Verify request is still active
         if (currentRequestToken.isCancelled ||
@@ -138,8 +137,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
           currentPage: currentPage.toInt(),
           pageSize: limit,
           newItemsCount: page.items.length,
-          assumeHasMore:
-              PagyConfig().assumeHasMoreWhenTotalPagesNull,
+          assumeHasMore: PagyConfig().assumeHasMoreWhenTotalPagesNull,
         );
 
         controller.value = controller.value.copyWith(
@@ -159,7 +157,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
         endPoint: endPoint,
         requestType: requestType,
         limit: limit,
-        page: currentPage,
+        page: _requestPage(currentPage),
         additionalQueryParams: _effectiveQuery,
         payloadData: effectivePayload,
         token: token,
@@ -225,8 +223,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
             currentPage: currentPage.toInt(),
             pageSize: limit,
             newItemsCount: newItems.length,
-            assumeHasMore:
-                PagyConfig().assumeHasMoreWhenTotalPagesNull,
+            assumeHasMore: PagyConfig().assumeHasMoreWhenTotalPagesNull,
           );
 
           controller.value = controller.value.copyWith(
@@ -285,8 +282,7 @@ extension PagyControllerLoader<T> on PagyController<T> {
     final params = lastParams!;
     final refresh = params['refresh'] as bool? ?? true;
     final page = params['page'] as num?;
-    final queryParameter =
-        params['queryParameter'] as Map<String, dynamic>?;
+    final queryParameter = params['queryParameter'] as Map<String, dynamic>?;
     final paginationMode = params['paginationMode'] as PaginationPayloadMode?;
     final payloadData = params['payloadData'];
 

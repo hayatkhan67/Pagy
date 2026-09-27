@@ -26,6 +26,17 @@ DioException _dio(
 
 void main() {
   group('ApiException.getException', () {
+    test('extracts the title from a lowercase-doctype HTML error page', () {
+      final result = ApiException.getException(
+        _dio(DioExceptionType.badResponse,
+            statusCode: 502,
+            data: '<!doctype html><html><head><title>Bad Gateway</title>'
+                '</head><body>...</body></html>'),
+      );
+
+      expect(result, 'Error 502: Bad Gateway');
+    });
+
     test('prefers a string server message', () {
       final result = ApiException.getException(
         _dio(DioExceptionType.badResponse,

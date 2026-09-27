@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pagy/internal_imports.dart';
 import 'package:pagy/pagy.dart';
-import 'package:pagy/src/features/pagination/presentation/widgets/common/pagy_builder.dart';
 
 class FakeRepo implements PagyRepository {
   FakeRepo(this.handler);
@@ -211,74 +210,56 @@ void main() {
     });
   });
 
-  group('PagyConfig global shimmer', () {
-    testWidgets('renders PagyConfig global shimmer via customShimmer parameter',
-        (tester) async {
-      PagyConfig().initialize(
-        baseUrl: 'https://api.example.com/',
-        customShimmer: const Text('Global Custom Shimmer'),
-      );
-
+  group('shimmer precedence', () {
+    Future<void> pumpLoading(
+      WidgetTester tester,
+      Widget Function(PagyController<int>) build,
+      void Function() expectations,
+    ) async {
       final gate = Completer<void>();
       final controller = _controller((params) async {
         await gate.future;
         return _pageResponse([1, 2]);
       });
-
-      await tester.pumpWidget(_wrap(
-        PagyListView<int>(
-          controller: controller,
-          customShimmer: PagyConfig().globalShimmer,
-          itemBuilderWithIndex: (context, item, i) => Text('item $item'),
-        ),
-      ));
-
+      await tester.pumpWidget(_wrap(build(controller)));
       final loading = controller.loadData();
       await tester.pump();
-
-      expect(find.text('Global Custom Shimmer'), findsOneWidget);
-
+      expectations();
       gate.complete();
       await loading;
       await tester.pump();
+    }
 
-      expect(find.text('Global Custom Shimmer'), findsNothing);
-      expect(find.text('item 1'), findsOneWidget);
+    testWidgets('customShimmer beats the placeholderItemModel skeleton',
+        (tester) async {
+      await pumpLoading(
+        tester,
+        (c) => PagyListView<int>(
+          controller: c,
+          shimmerEffect: true,
+          placeholderItemModel: 0,
+          customShimmer: const Text('Custom Shimmer'),
+          itemBuilderWithIndex: (context, item, i) => Text('item $item'),
+        ),
+        () {
+          expect(find.text('Custom Shimmer'), findsOneWidget);
+          expect(find.text('item 0'), findsNothing);
+        },
+      );
     });
 
-    testWidgets('local customShimmer overrides PagyConfig global shimmer',
+    testWidgets('placeholderItemModel skeleton is used without overrides',
         (tester) async {
-      PagyConfig().initialize(
-        baseUrl: 'https://api.example.com/',
-        customShimmer: const Text('Global Custom Shimmer'),
-      );
-
-      final gate = Completer<void>();
-      final controller = _controller((params) async {
-        await gate.future;
-        return _pageResponse([1, 2]);
-      });
-
-      await tester.pumpWidget(_wrap(
-        PagyListView<int>(
-          controller: controller,
-          customShimmer: const Text('Local Shimmer Override'),
+      await pumpLoading(
+        tester,
+        (c) => PagyListView<int>(
+          controller: c,
+          shimmerEffect: true,
+          placeholderItemModel: 0,
           itemBuilderWithIndex: (context, item, i) => Text('item $item'),
         ),
-      ));
-
-      final loading = controller.loadData();
-      await tester.pump();
-
-      expect(find.text('Local Shimmer Override'), findsOneWidget);
-      expect(find.text('Global Custom Shimmer'), findsNothing);
-
-      gate.complete();
-      await loading;
-      await tester.pump();
-
-      expect(find.text('Local Shimmer Override'), findsNothing);
-      expect(find.text('item 1'), findsOneWidget);
+        () => expect(find.text('item 0'), findsWidgets),
+      );
     });
   });
 }

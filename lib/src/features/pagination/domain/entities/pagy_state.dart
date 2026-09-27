@@ -52,7 +52,7 @@ class PagyState<T> {
 
   /// The current page number in pagination.
   ///
-  /// Defaults to `1`.
+  /// Defaults to `0`, meaning nothing has been loaded yet.
   final num currentPage;
 
   /// The total number of available pages.
@@ -80,7 +80,7 @@ class PagyState<T> {
     this.isFetching = false,
     this.isMoreFetching = false,
     this.data = const [],
-    this.currentPage = 1,
+    this.currentPage = 0,
     this.totalPages = 1,
     this.error,
     @Deprecated('Use error instead') this.errorMessage,

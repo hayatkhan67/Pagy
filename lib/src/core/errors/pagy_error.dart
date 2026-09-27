@@ -268,7 +268,8 @@ class PagyError {
     if (suggestion != null) buffer.write(', suggestion: $suggestion');
     buffer.write(')');
     if (stackTrace != null) {
-      buffer.write('\nStackTrace:\n${stackTrace.toString().split('\n').take(5).join('\n')}...');
+      buffer.write(
+          '\nStackTrace:\n${stackTrace.toString().split('\n').take(5).join('\n')}...');
     }
     return buffer.toString();
   }

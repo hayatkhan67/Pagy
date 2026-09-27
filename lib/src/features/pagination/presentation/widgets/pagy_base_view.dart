@@ -217,15 +217,8 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   ///
   /// Can be overridden by child classes for custom shimmer appearance.
   Widget buildShimmer(BuildContext context) {
-    if (customShimmer != null) {
-      return customShimmer!;
-    }
-    if (shimmerBuilder != null) {
-      return shimmerBuilder!(context);
-    }
-    if (PagyConfig().globalShimmer != null) {
-      return PagyConfig().globalShimmer!;
-    }
+    final override = resolveShimmerOverride(context);
+    if (override != null) return override;
     return PagyShimmer<T>(
       count: placeholderItemCount,
       itemBuilder: (c, index) {
@@ -242,6 +235,18 @@ abstract class PagyBaseView<T> extends StatelessWidget {
         childBuilder,
       ),
     );
+  }
+
+  /// The loading widget to show instead of the skeleton built from
+  /// [placeholderItemModel], or `null` to build that skeleton.
+  ///
+  /// Precedence: [customShimmer] > [shimmerBuilder] > skeleton from
+  /// [placeholderItemModel].
+  @protected
+  Widget? resolveShimmerOverride(BuildContext context) {
+    if (customShimmer != null) return customShimmer;
+    if (shimmerBuilder != null) return shimmerBuilder!(context);
+    return null;
   }
 
   /// Gets the effective item builder that works with both old and new signatures

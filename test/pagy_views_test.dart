@@ -322,8 +322,7 @@ void main() {
         controller,
         // crossAxisCount is ignored when a delegate is supplied.
         crossAxisCount: 2,
-        gridDelegate:
-            const SliverSimpleGridDelegateWithFixedCrossAxisCount(
+        gridDelegate: const SliverSimpleGridDelegateWithFixedCrossAxisCount(
           crossAxisCount: 4,
         ),
       );

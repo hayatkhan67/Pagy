@@ -44,7 +44,7 @@ Add this to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pagy: ^1.4.0
+  pagy: ^1.5.0
 ```
 
 Then run:
@@ -71,6 +71,7 @@ void main() {
     baseUrl: "https://api.example.com/",
     pageKey: 'page',          // Your API's page param name
     limitKey: 'limit',        // Your API's limit param name
+    firstPage: 1,             // Use 0 if your API's first page is page 0
     enableLogs: true,         // Enable debug logs
     payloadMode: PaginationPayloadMode.queryParams, // or .payload for body
   );
@@ -587,14 +588,7 @@ PagyGridView<Product>(
 )
 ```
 
-#### Global Custom Shimmer
-Configure a global fallback shimmer across your app via `PagyConfig`:
-```dart
-PagyConfig().initialize(
-  baseUrl: "https://api.example.com/",
-  customShimmer: const MyGlobalShimmerPlaceholder(),
-);
-```
+Precedence: `customShimmer` → `shimmerBuilder` → `placeholderItemModel` skeleton.
 
 ### 6. Show Pagination Info in UI
 

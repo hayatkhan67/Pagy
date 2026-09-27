@@ -142,8 +142,7 @@ void main() {
     test('assumes more pages when totalPages is missing (opt-in)', () async {
       final requests = <PagyParams>[];
       final config = PagyConfig();
-      final previous =
-          config.assumeHasMoreWhenTotalPagesNull;
+      final previous = config.assumeHasMoreWhenTotalPagesNull;
       config.assumeHasMoreWhenTotalPagesNull = true;
       addTearDown(() {
         config.assumeHasMoreWhenTotalPagesNull = previous;
@@ -220,7 +219,8 @@ void main() {
       expect(requests, hasLength(1), reason: 'no trailing empty request');
     });
 
-    test('retry should preserve filters from the last failed request', () async {
+    test('retry should preserve filters from the last failed request',
+        () async {
       final List<PagyParams> requests = [];
       bool shouldFail = true;
 
@@ -256,7 +256,8 @@ void main() {
       expect(requests, hasLength(2));
     });
 
-    test('refresh with preserveFilters: true should keep current filters', () async {
+    test('refresh with preserveFilters: true should keep current filters',
+        () async {
       final List<PagyParams> requests = [];
       final controller = PagyController<int>(
         endPoint: '/test',
@@ -335,4 +336,3 @@ void main() {
     });
   });
 }
-

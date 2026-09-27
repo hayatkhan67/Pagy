@@ -401,10 +401,7 @@ extension PagyControllerHelpers<T> on PagyController<T> {
   /// controller.move(from: 3, to: 0); // Move 4th item to the top
   /// ```
   bool move({required int from, required int to}) {
-    if (from < 0 ||
-        to < 0 ||
-        from >= _items.length ||
-        to >= _items.length) {
+    if (from < 0 || to < 0 || from >= _items.length || to >= _items.length) {
       return false;
     }
     final item = _items.removeAt(from);
