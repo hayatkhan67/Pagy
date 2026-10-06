@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart';
 
 import '../controllers/pagy_controller.dart';
-import 'common/pagy_shimmer.dart';
 import 'pagy_base_view.dart';
 
 /// {@template pagy_grid_view}
@@ -164,30 +163,21 @@ class PagyGridView<T> extends PagyBaseView<T> {
   /// The shimmer has no paging footer, so it keeps the plain [MasonryGridView]
   /// rather than the sliver layout [buildLayout] uses for real data.
   @override
-  Widget buildShimmer(BuildContext context) {
-    final override = resolveShimmerOverride(context);
-    if (override != null) return override;
-    return PagyShimmer<T>(
-      count: placeholderItemCount,
-      itemBuilder: (c, index) {
-        if (itemBuilderWithIndex != null) {
-          return itemBuilderWithIndex!(c, placeholderItemModel as T, index);
-        }
-        // ignore: deprecated_member_use_from_same_package
-        return itemBuilder!(c, placeholderItemModel as T);
-      },
-      layoutBuilder: (childBuilder) => MasonryGridView.builder(
-        shrinkWrap: shrinkWrap,
-        physics: disableScrolling
-            ? const NeverScrollableScrollPhysics()
-            : scrollPhysics,
-        padding: _effectivePadding,
-        gridDelegate: _effectiveGridDelegate,
-        crossAxisSpacing: crossAxisSpacing,
-        mainAxisSpacing: mainAxisSpacing,
-        itemCount: placeholderItemCount,
-        itemBuilder: childBuilder,
-      ),
+  Widget buildShimmerLayout(
+    BuildContext context,
+    Widget Function(BuildContext, int) childBuilder,
+  ) {
+    return MasonryGridView.builder(
+      shrinkWrap: shrinkWrap,
+      physics: disableScrolling
+          ? const NeverScrollableScrollPhysics()
+          : scrollPhysics,
+      padding: _effectivePadding,
+      gridDelegate: _effectiveGridDelegate,
+      crossAxisSpacing: crossAxisSpacing,
+      mainAxisSpacing: mainAxisSpacing,
+      itemCount: placeholderItemCount,
+      itemBuilder: childBuilder,
     );
   }
 

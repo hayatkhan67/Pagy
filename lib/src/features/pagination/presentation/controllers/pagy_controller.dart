@@ -255,7 +255,12 @@ class PagyController<T> {
   /// ```
   /// Note: [filters] *replaces* any previously applied filter map; it is not
   /// merged into it.
+  ///
+  /// The results of the previous filter are dropped first, so the loader /
+  /// shimmer shows while the new ones load (unlike [refresh], which keeps the
+  /// items on screen because the query did not change).
   Future<void> applyFilters(Map<String, dynamic> filters) async {
+    _clearItems();
     await loadData(queryParameter: filters);
   }
 
@@ -267,7 +272,11 @@ class PagyController<T> {
   /// ```dart
   /// controller.search('laptop', searchKey: 'query');
   /// ```
+  ///
+  /// The results of the previous query are dropped first, so the loader /
+  /// shimmer shows while the new ones load.
   Future<void> search(String query, {String searchKey = 'q'}) async {
+    _clearItems();
     await loadData(queryParameter: {searchKey: query});
   }
 
@@ -277,6 +286,8 @@ class PagyController<T> {
   Future<void> clearFilters({bool refresh = true}) async {
     filter = null;
     if (refresh) {
+      // The filtered results no longer apply: show the loader / shimmer.
+      _clearItems();
       await loadData(preserveFiltersOnRefresh: false);
     }
   }

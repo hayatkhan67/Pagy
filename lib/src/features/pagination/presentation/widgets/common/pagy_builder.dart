@@ -85,7 +85,10 @@ class PagyBuilder<T> extends StatelessWidget {
   /// Custom loader widget for pagination.
   final Widget? customLoader;
 
-  /// Custom shimmer widget shown during initial loading.
+  /// A single placeholder item shown during initial loading, repeated
+  /// [placeholderItemCount] times through [layoutBuilder] (and used as the
+  /// load-more footer). Ignored when [shimmerBuilder] is given: the view's
+  /// own shimmer builder already applies it.
   final Widget? customShimmer;
 
   /// Limit number of visible items (useful for previews).
@@ -242,10 +245,19 @@ class PagyBuilder<T> extends StatelessWidget {
           final effectiveShimmer =
               shimmerEffect || customShimmer != null || shimmerBuilder != null;
           if (effectiveShimmer) {
-            final shimmerWidget =
-                customShimmer ?? shimmerBuilder?.call(context);
-            if (shimmerWidget != null) {
-              return shimmerWidget;
+            final builder = shimmerBuilder;
+            if (builder != null) return builder(context);
+            final custom = customShimmer;
+            if (custom != null) {
+              return IgnorePointer(
+                child: layoutBuilder(
+                  context,
+                  state,
+                  placeholderItemCount,
+                  (_, __) => custom,
+                  null,
+                ),
+              );
             }
           }
           return _loader();
@@ -356,6 +368,8 @@ class PagyBuilder<T> extends StatelessWidget {
   }
 
   Widget _buildLoadingFooter(BuildContext context) {
+    // The single custom placeholder doubles as the next-page footer.
+    if (customShimmer != null) return IgnorePointer(child: customShimmer);
     // A shimmer footer needs a model to render; direct PagyBuilder users may
     // supply only a shimmerBuilder, in which case fall back to the loader.
     if (shimmerEffect && placeholderItemModel != null) {

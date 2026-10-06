@@ -571,10 +571,14 @@ Column(
 Pass a `customShimmer` widget or a `shimmerBuilder` callback to any Pagy view without needing to define a `placeholderItemModel`:
 
 #### Per-View Custom Shimmer
+`customShimmer` is **one** placeholder item. Pagy repeats it `placeholderItemCount` times in the view's own layout (so `itemSpacing`, `padding`, direction and grid columns apply) and reuses it as the next-page footer. Do not build the repeated list yourself.
+
 ```dart
 PagyListView<Product>(
   controller: pagyController,
-  customShimmer: const MyCustomShimmerLoadingView(),
+  customShimmer: const ProductCardShimmer(), // a single card
+  placeholderItemCount: 6,                   // Pagy shows six of them
+  itemSpacing: 12,
   itemBuilderWithIndex: (context, product, index) => ProductCard(product: product),
 )
 ```
@@ -588,7 +592,7 @@ PagyGridView<Product>(
 )
 ```
 
-Precedence: `customShimmer` → `shimmerBuilder` → `placeholderItemModel` skeleton.
+Precedence: `customShimmer` (one item, repeated) → `shimmerBuilder` (whole placeholder) → `placeholderItemModel` skeleton.
 
 ### 6. Show Pagination Info in UI
 

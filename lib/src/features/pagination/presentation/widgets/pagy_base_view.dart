@@ -127,10 +127,22 @@ abstract class PagyBaseView<T> extends StatelessWidget {
   /// Custom loader widget shown during pagination.
   final Widget? customLoader;
 
-  /// Custom shimmer widget shown during initial loading.
+  /// A **single** placeholder item shown while the first page loads.
   ///
-  /// When provided, this overrides the default skeleton shimmer and does not
-  /// require [placeholderItemModel].
+  /// Pass one item, not a list: Pagy repeats it [placeholderItemCount] times
+  /// inside the view's own layout, so the spacing, padding, direction (list,
+  /// horizontal, grid) and non-scrolling behaviour match the real items. It is
+  /// also used as the footer while the next page loads. Does not require
+  /// [placeholderItemModel].
+  ///
+  /// ```dart
+  /// PagyListView<Chat>(
+  ///   controller: controller,
+  ///   customShimmer: const ChatRowShimmer(), // one row
+  ///   placeholderItemCount: 6,               // Pagy shows six of them
+  ///   ...
+  /// )
+  /// ```
   final Widget? customShimmer;
 
   /// Custom builder for shimmer loading state.
@@ -215,10 +227,18 @@ abstract class PagyBaseView<T> extends StatelessWidget {
 
   /// Builds the shimmer placeholder layout.
   ///
-  /// Can be overridden by child classes for custom shimmer appearance.
+  /// Precedence: [customShimmer] (one item, repeated [placeholderItemCount]
+  /// times) > [shimmerBuilder] (the whole placeholder) > skeleton built from
+  /// [placeholderItemModel].
   Widget buildShimmer(BuildContext context) {
-    final override = resolveShimmerOverride(context);
-    if (override != null) return override;
+    final custom = customShimmer;
+    if (custom != null) {
+      return IgnorePointer(
+        child: buildShimmerLayout(context, (_, __) => custom),
+      );
+    }
+    final builder = shimmerBuilder;
+    if (builder != null) return builder(context);
     return PagyShimmer<T>(
       count: placeholderItemCount,
       itemBuilder: (c, index) {
@@ -229,25 +249,22 @@ abstract class PagyBaseView<T> extends StatelessWidget {
         // ignore: deprecated_member_use_from_same_package
         return itemBuilder!(c, placeholderItemModel as T);
       },
-      layoutBuilder: (childBuilder) => buildLayout(
-        context,
-        placeholderItemCount,
-        childBuilder,
-      ),
+      layoutBuilder: (childBuilder) =>
+          buildShimmerLayout(context, childBuilder),
     );
   }
 
-  /// The loading widget to show instead of the skeleton built from
-  /// [placeholderItemModel], or `null` to build that skeleton.
+  /// Lays out [placeholderItemCount] placeholder items.
   ///
-  /// Precedence: [customShimmer] > [shimmerBuilder] > skeleton from
-  /// [placeholderItemModel].
+  /// Defaults to the view's normal [buildLayout] (same padding, spacing and
+  /// direction as the real items); override when the loading state needs a
+  /// different container, as the grid does.
   @protected
-  Widget? resolveShimmerOverride(BuildContext context) {
-    if (customShimmer != null) return customShimmer;
-    if (shimmerBuilder != null) return shimmerBuilder!(context);
-    return null;
-  }
+  Widget buildShimmerLayout(
+    BuildContext context,
+    Widget Function(BuildContext, int) childBuilder,
+  ) =>
+      buildLayout(context, placeholderItemCount, childBuilder);
 
   /// Gets the effective item builder that works with both old and new signatures
   Widget Function(BuildContext, T, int) get _effectiveItemBuilder {

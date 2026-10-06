@@ -1,3 +1,25 @@
+## Unreleased
+
+### 🐛 Fixed
+
+- **`search()`, `applyFilters()` and `clearFilters()` now show the loader / shimmer.**
+  A new query makes the old results invalid, but they stayed on screen (the builder only
+  shows the loading state when there is nothing to show), so searching looked frozen.
+  These three now drop the displayed items before loading. `refresh()` is unchanged: it
+  keeps the items under the refresh indicator.
+
+### ⚠️ Changed (behavior)
+
+- **`customShimmer` is now a single placeholder item**, not a whole loading screen.
+  Pagy repeats it `placeholderItemCount` times inside the view's own layout (list,
+  horizontal or grid), so spacing, padding, direction and non-scrolling behavior match
+  the real items, and it is also used as the next-page footer. Before, apps built the
+  repeated list themselves (`List.generate`) inside the widget, which ignored
+  `itemSpacing`/`padding` and `placeholderItemCount`. **Migration:** pass one item and
+  set `placeholderItemCount`. `shimmerBuilder` is unchanged (whole placeholder).
+- Added `PagyBaseView.buildShimmerLayout` (protected). `resolveShimmerOverride` was
+  removed; `buildShimmer` now resolves precedence itself.
+
 ## 1.5.0
 
 A correctness and polish release. No breaking API changes, but two runtime behaviors change — see **Changed** below.
